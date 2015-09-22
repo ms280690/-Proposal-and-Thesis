@@ -1,0 +1,41 @@
+
+Mehul Solanki.
+
+Narrowing in Curry Programming Language.
+
+
+This document has been written from various sources such as reports, manuals and research papers from the Curry programming language and implementing small working examples.
+
+
+Functional Programming == Equational Definition of Functions
+Logic Programming == First Order Predicate Logic
+
+Therefore,
+Functional Logic Programming == Equational Logic Programming (resolution + replacement of subterms)
+
+{--
+Constructor set C
+
+Function / Operation set F
+
+and some more math notations	
+--}
+
+Linear term = no multiple occurrences of one variable.
+
+Operation(constructor) rooted term == root symbol is an operation
+head normal form term == variable or constructor rooted term
+
+A pattern is a term of the form f (d 1 , . . . , d n ) where f /n ∈ F and d 1 , . . . , d n ∈ T (C, X ). 
+
+A term rewriting system (TRS) is set of rewrite rules, where an (uncon-ditional) rewrite rule is a pair l → r with a linear pattern l as the left-hand side
+(lhs) and a term r as the right-hand side (rhs).
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,140 @@
+{- Auto generated stubs for external functions and types
+   Remove this comment to suppress warnings. -}
+module Curry.DebugModule.Float where
+ 
+strict_prim_Float_plus ::
+                       (DM.DM dm) =>
+                         Curry.DebugModule.Prelude.Float ->
+                           Curry.DebugModule.Prelude.Float ->
+                             dm Curry.DebugModule.Prelude.Float
+strict_prim_Float_plus x0 x1
+  = hook_strict_prim_Float_plus x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_prim_Float_minus ::
+                        (DM.DM dm) =>
+                          Curry.DebugModule.Prelude.Float ->
+                            Curry.DebugModule.Prelude.Float ->
+                              dm Curry.DebugModule.Prelude.Float
+strict_prim_Float_minus x0 x1
+  = hook_strict_prim_Float_minus x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_prim_Float_times ::
+                        (DM.DM dm) =>
+                          Curry.DebugModule.Prelude.Float ->
+                            Curry.DebugModule.Prelude.Float ->
+                              dm Curry.DebugModule.Prelude.Float
+strict_prim_Float_times x0 x1
+  = hook_strict_prim_Float_times x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_prim_Float_divide ::
+                         (DM.DM dm) =>
+                           Curry.DebugModule.Prelude.Float ->
+                             Curry.DebugModule.Prelude.Float ->
+                               dm Curry.DebugModule.Prelude.Float
+strict_prim_Float_divide x0 x1
+  = hook_strict_prim_Float_divide x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_prim_Float_lt ::
+                     (DM.DM dm) =>
+                       Curry.DebugModule.Prelude.Float ->
+                         Curry.DebugModule.Prelude.Float ->
+                           dm Curry.DebugModule.Prelude.Bool
+strict_prim_Float_lt x0 x1
+  = hook_strict_prim_Float_lt x0 x1 (Prelude.error "not implemented")
+ 
+strict_prim_Float_gt ::
+                     (DM.DM dm) =>
+                       Curry.DebugModule.Prelude.Float ->
+                         Curry.DebugModule.Prelude.Float ->
+                           dm Curry.DebugModule.Prelude.Bool
+strict_prim_Float_gt x0 x1
+  = hook_strict_prim_Float_gt x0 x1 (Prelude.error "not implemented")
+ 
+strict_prim_Float_leq ::
+                      (DM.DM dm) =>
+                        Curry.DebugModule.Prelude.Float ->
+                          Curry.DebugModule.Prelude.Float ->
+                            dm Curry.DebugModule.Prelude.Bool
+strict_prim_Float_leq x0 x1
+  = hook_strict_prim_Float_leq x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_prim_Float_geq ::
+                      (DM.DM dm) =>
+                        Curry.DebugModule.Prelude.Float ->
+                          Curry.DebugModule.Prelude.Float ->
+                            dm Curry.DebugModule.Prelude.Bool
+strict_prim_Float_geq x0 x1
+  = hook_strict_prim_Float_geq x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_prim_i2f ::
+                (DM.DM dm) =>
+                  Curry.DebugModule.Prelude.Int -> dm Curry.DebugModule.Prelude.Float
+strict_prim_i2f x0
+  = hook_strict_prim_i2f x0 (Prelude.error "not implemented")
+ 
+strict_prim_truncate ::
+                     (DM.DM dm) =>
+                       Curry.DebugModule.Prelude.Float -> dm Curry.DebugModule.Prelude.Int
+strict_prim_truncate x0
+  = hook_strict_prim_truncate x0 (Prelude.error "not implemented")
+ 
+strict_prim_round ::
+                  (DM.DM dm) =>
+                    Curry.DebugModule.Prelude.Float -> dm Curry.DebugModule.Prelude.Int
+strict_prim_round x0
+  = hook_strict_prim_round x0 (Prelude.error "not implemented")
+ 
+strict_prim_sqrt ::
+                 (DM.DM dm) =>
+                   Curry.DebugModule.Prelude.Float ->
+                     dm Curry.DebugModule.Prelude.Float
+strict_prim_sqrt x0
+  = hook_strict_prim_sqrt x0 (Prelude.error "not implemented")
+ 
+strict_prim_log ::
+                (DM.DM dm) =>
+                  Curry.DebugModule.Prelude.Float ->
+                    dm Curry.DebugModule.Prelude.Float
+strict_prim_log x0
+  = hook_strict_prim_log x0 (Prelude.error "not implemented")
+ 
+strict_prim_exp ::
+                (DM.DM dm) =>
+                  Curry.DebugModule.Prelude.Float ->
+                    dm Curry.DebugModule.Prelude.Float
+strict_prim_exp x0
+  = hook_strict_prim_exp x0 (Prelude.error "not implemented")
+ 
+strict_prim_sin ::
+                (DM.DM dm) =>
+                  Curry.DebugModule.Prelude.Float ->
+                    dm Curry.DebugModule.Prelude.Float
+strict_prim_sin x0
+  = hook_strict_prim_sin x0 (Prelude.error "not implemented")
+ 
+strict_prim_cos ::
+                (DM.DM dm) =>
+                  Curry.DebugModule.Prelude.Float ->
+                    dm Curry.DebugModule.Prelude.Float
+strict_prim_cos x0
+  = hook_strict_prim_cos x0 (Prelude.error "not implemented")
+ 
+strict_prim_tan ::
+                (DM.DM dm) =>
+                  Curry.DebugModule.Prelude.Float ->
+                    dm Curry.DebugModule.Prelude.Float
+strict_prim_tan x0
+  = hook_strict_prim_tan x0 (Prelude.error "not implemented")
+ 
+strict_prim_atan ::
+                 (DM.DM dm) =>
+                   Curry.DebugModule.Prelude.Float ->
+                     dm Curry.DebugModule.Prelude.Float
+strict_prim_atan x0
+  = hook_strict_prim_atan x0 (Prelude.error "not implemented")

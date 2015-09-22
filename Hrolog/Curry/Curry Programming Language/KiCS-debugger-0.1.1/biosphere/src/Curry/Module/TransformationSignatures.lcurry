@@ -1,0 +1,76 @@
+Signature Transformation
+========================
+
+This module provides a transformation of signatures (FlatCurry type expressions to AbstractCurry/Haskell type expressions).
+
+Imports
+-------
+
+> import System
+
+> import FlatCurry as FC
+> import AbstractCurry as AC
+
+Import the converters from flat to abstract curry without any debug
+transformation:
+
+> import FlatToAbstractCurry
+
+Import utily and constants for Debug Infos:
+
+> import TransformationDebugInfo
+
+Transformation
+--------------
+
+arity == number of func types:
+`a`                   ~>  `m a`
+`a -> b`              ~>  `a -> m b`
+`a -> ... -> b -> c`  ~>  `a -> ... -> b -> m c`
+
+arity < number of func types:
+
+`a` -> `b` -> `c`     ~>  `a` -> m (FuncRepr m b c)
+
+`a1 -> a2 -> ... an` with arity i ~> `a1 -> a2 -> ... ai -> m (FuncRepr m ai+1 (FuncRepr m ... an)...))`
+
+`DM m =>` is added.
+
+Wrap debug type around each returned type.
+`n` is the left arity (arity in initial call).
+
+> transformType :: Int -> TypeExpr -> [FC.QName] -> CTypeExpr
+> transformType n te@(TVar _) _            = (debugTVarWrapper n) $ convertType te
+
+  Higher order data types require additional tvar for debug monad:
+
+> transformType n (TCons name tes) hoTypes =
+>   debugTVarWrapper n $ CTCons (renameType name)
+>                               tes'
+>   where
+>     tes' = if elem name hoTypes then CTVar (-1,debugTVarName):tts else tts
+>     tts = map (\t -> transformType (-1) t hoTypes) tes
+
+> transformType n (FuncType te1 te2) hoTypes
+>   | n >  0 = CFuncType (transformParamType te1 hoTypes) 
+>                        (transformType (n-1) te2 hoTypes)
+>   | n <= 0  = debugTVarWrapper n $ funcRepr
+>                                    (transformParamType te1 hoTypes)
+>                                    (transformType (-1) te2 hoTypes)
+>   where
+>     funcRepr x y = (CTCons funcRepType [CTCons debugTVar [],x,y])
+
+  Handles parameters. TVars are just converted, functional parameters and data
+  types are transformed:
+
+>     transformParamType te hoTypes = case te of
+>       (TVar _) -> convertType te
+>       _        -> transformType (-1) te hoTypes
+
+  Returns for either `id` or a wrapper for a type to add the debug type
+  depending on given left arity. The wrapper is returned for the 1st not
+  applied type: left arity == 0.
+
+> debugTVarWrapper n = if   n == 0
+>                      then wrapDebugTVar
+>                      else id

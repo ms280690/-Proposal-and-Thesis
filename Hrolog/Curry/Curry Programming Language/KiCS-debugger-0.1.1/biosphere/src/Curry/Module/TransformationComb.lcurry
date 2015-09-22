@@ -1,0 +1,142 @@
+Transformation of Combs
+=======================
+
+Imports
+-------
+
+> import FlatCurry as FC
+> import AbstractCurry as AC
+> import AbstractHaskell
+
+> import SrcRef
+
+Import the converters from flat to abstract curry without any debug
+transformation:
+
+> import FlatToAbstractCurry
+
+Import the transformation monad `TM`:
+
+> import TransformationMonad
+
+Import utily and constants for debug information and hooks:
+
+> import TransformationDebugInfo
+
+Import the support for higher order.
+
+> import TransformationPartCalls
+
+Transformation
+--------------
+
+Transforms a comb call in the Transformation Monad to get fresh variables.
+
+> transformComb :: CombType -> FC.QName -> [CExpr] -> String -> [SrcRef] -> TM CExpr
+> transformComb ct name args mod srcRefs =
+>   freshVars (length args) >>=. \vars ->
+>   let
+
+  Debug info for the hook, contains current source reference as static info
+  and terms of the arguments as dynamic info.
+
+>     info = debugInfo (createStaticInfo mod srcRefs)
+>                      (dynamicInfo (presym "[]")
+>                                   (list (map genTermCallVar vars)))
+>   in
+
+  Delegate to method for comb type taking fresh vars and debug info, too:
+
+>     ret $ transformComb' ct name args vars info
+
+Transformation of specific `CombType`
+-------------------------------------
+
+> transformComb' :: CombType -> FC.QName -> [CExpr] -> [VarIndex] -> CExpr -> CExpr
+
+Transform regular function calls with a func call hook and an `eval`.
+
+> transformComb' FuncCall name@(_,fn) args vars info =
+>   call (renameFunc name) args vars insertHook
+>   where
+>     insertHook value = comb (debugMonadAs,"funcCallHook")
+>                             [acyStr fn,info,value]
+
+Transforms partly applied functions with a part call hook, wrapped with a
+returned `FuncRep`.
+
+> transformComb' (FuncPartCall n) name@(mn,_) args vars _ =
+
+  Use the part call helper for number of missing arguments.
+  The helper takes the term representation and the function applied to the
+  available arguments (`call`). Uses `id` as wrapper to have the helper call
+  the hooks:
+
+>   (call (renameFunc name) args vars pcWrap) 
+>     where
+>       pcWrap = wrapReturn . helper n funcTerm
+>       helper = if n <= arityThreshold
+>                then combDefaultPC
+>                else combPC mn
+
+  Create the function represention term by calling
+  `<module>.term_<function>`
+  with generated argument terms:
+
+>       funcTerm     = comb (pcTermName name) [argsTerms]
+>       argsTerms    = list (map genTermCallVar vars)
+
+Transform constructor calls with a constructor hook and an wrapped `return`:
+
+> transformComb' ConsCall name args vars info =
+>   call (renameCons name) args vars $
+>        (insHook "constructor" info) . wrapReturn
+
+A part call of a constructor is transformed similar to `FuncPartCall` using the  corresponding part call helper to return a monadic function.
+But a constructor is not monadic, for that reason a lambda term is inserted to handle all arguments and `return` the constructed data.
+
+> transformComb' (ConsPartCall n) name@(mn,_) args vars _ =
+>   (callExpr lambda args vars pcWrap) 
+>     where
+>       lambda    = CLambda lamdaVars combCall
+>       missing   = map (+length vars) [0..(n-1)]
+>       lamdaVars = map px missing
+>       combCall  = wrapReturn $ comb (renameCons name) $ map xx (vars++missing)
+>       pcWrap    = wrapReturn . helper n consTerm
+>       helper    = if n <= arityThreshold
+>                   then combDefaultPC
+>                   else combPC mn
+
+  Create the function represention term by calling
+  `<module>.term_<Constructor>`
+  with generated argument terms:
+
+>       consTerm  = comb (pcConsName name) [argsTerms]
+>       argsTerms = list (map genTermCallVar vars)
+
+
+Creates the comb call for given name, argument expressions and fresh variables.
+
+> call :: FC.QName -> [CExpr] -> [VarIndex] -> (CExpr -> CExpr) -> CExpr
+> call name args vars wrapper = callExpr combCall args vars wrapper
+>   where combCall = (comb name (map xx vars))
+
+
+Creates the call for given call expression, argument expressions and fresh variables.
+Constants are called directly, a `do` expression is returned for functions and constructors with arguments, evaluating the arguments first.
+
+> callExpr :: CExpr -> [CExpr] -> [VarIndex] -> (CExpr -> CExpr) -> CExpr
+> callExpr expr args vars wrapper =
+>   if null args
+
+  No arguments, a `do` expression is not required:
+
+>    then wrapper $ expr
+
+  Evaluate all arguments in a `do` with the expression as last expression:
+
+>    else CDoExpr ((zipWith (CSPat . px) vars args) ++ [CSExpr $ wrapper expr])
+
+
+> funcRep x y = comb funcRepCons [x,y]
+

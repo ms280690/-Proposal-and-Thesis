@@ -1,0 +1,115 @@
+Monad for Flat/Abstract Curry Transformation
+============================================
+
+This module defines a monad for Flat/Abstract Curry transformation, especially
+for transforming expressions, because the monad state holds information about
+the expression depth and breadth.
+
+Required imports for an abstract monadic expression transformation:
+
+> import Maybe
+> import SrcRef
+
+Bind operators
+--------------
+
+> infixl 1 >>=.
+> infixl 2 >>.
+
+Monad
+-----
+
+Monad state contains the index of the next fresh variable and maybe an info
+tree (plus a flag if the next `ignoreSrcRef` should be performed, see further
+info about this flag below at `ignoreSrcRef`):
+
+> type TMState = (Int,Maybe (InfoTree,Bool))
+> type TM a = TMState -> (TMState,a)
+
+`return` of the transform monad:
+
+> ret :: a -> TM a
+> ret x td = (td,x)
+
+`bind` of the transform monad:
+
+> (>>=.) :: TM a -> (a -> TM b) -> TM b
+> (f >>=. g) td = case f td of
+>                      (td',x) -> g x td'
+>
+> (>>.) :: TM a -> TM b -> TM b
+> f >>. g = f >>=. \_ -> g
+
+Runs the monad with the given index of a fresh variable and no info tree.
+
+> runVar :: Int -> TM a -> a
+> runVar var m = snd (m (var,Nothing))
+
+Runs the monad with and an initial state of fresh var 0 and no info tree.
+
+> run :: TM a -> a
+> run = runVar 0
+
+
+Actions
+-------
+
+Extracts the monad state.
+
+> state :: TM TMState
+> state tms = (tms,tms)
+
+Returns a fresh variable.
+
+> freshVar :: TM Int
+> freshVar (var,mInfoTree) = ((var+1,mInfoTree),var)
+
+Returns `n` fresh variables.
+
+> freshVars :: Int -> TM [Int]
+> freshVars n (var,mInfoTree) = ((var+n,mInfoTree),(take n (from var)))
+>   where from i = i:(from $ i+1)
+
+Set the current info tree.
+
+> setInfoTree :: InfoTree -> TM ()
+> setInfoTree infoTree (var,_) = ((var,Just (infoTree,True)),())
+
+Returns the current info tree.
+
+> currentInfoTree :: TM InfoTree
+> currentInfoTree state@(_,Just (infoTree,_)) = (state,infoTree)
+
+Extracts the current source reference and sets the info tree to the next static
+info (flag is set to `True`, the regular state).
+
+> nextSrcRefs :: TM [SrcRef]
+> nextSrcRefs (var,Just (infoTree,_)) =
+>   let (srcRefs,nextInfoTree) = nextStaticInfo infoTree in
+>     ((var,Just (nextInfoTree,True)),srcRefs)
+
+Ingores (extracts it, but does not return) the next source reference (of a
+variable). Does not extract (leave current info tree as it is) if the
+`performFlag` is not set.
+This is required to handle variable expressions which are arguments of flexible
+`case` expressions, because they do not have a source reference as they are in
+fact rule patterns.
+
+> ignoreVarRefs :: TM ()
+> ignoreVarRefs (var,Just (infoTree,performFlag)) =
+>   let nextInfoTree = if performFlag
+>                         then snd $ nextStaticInfo infoTree
+>                         else infoTree in
+>     ((var,Just (nextInfoTree,True)),())
+
+Enables the `performFlag` according to `ignoreVarRefs`.
+
+> skipNextVar :: TM ()
+> skipNextVar (var,Just (infoTree,_)) = ((var,Just (infoTree,False)),())
+
+Sequence for this monad, which includes increasing depth before and decreasing
+after the sequence and increasing breadth before each sequenced action.
+
+> sequence :: [TM a] -> TM [a]
+> sequence = foldr mcons (ret [])
+>   where mcons p q = p >>=. \x -> q >>=. \ys -> ret (x:ys)

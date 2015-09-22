@@ -1,0 +1,29 @@
+[ForFunction "prim_split"
+,ForFunction "prim_nextInt"
+,ForFunction "prim_nextIntRange"
+,ForFunction "getRandomSeed"
+]
+
+import System.Random
+
+prim_split :: C_Int -> Result (T2 C_Int C_Int)
+prim_split seed _ = toCurry (fst (next g1), fst (next g2))
+ where
+  (g1,g2) = split (mkStdGen (fromCurry seed))
+
+prim_nextInt :: C_Int -> Result (List C_Int)
+prim_nextInt seed _ = toCurry (nextInt (fromCurry seed))
+
+nextInt :: Int -> [Int]
+nextInt = randoms . mkStdGen
+
+prim_nextIntRange :: C_Int -> C_Int -> Result (List C_Int)
+prim_nextIntRange seed bound _ =
+  toCurry (nextIntRange (fromCurry seed) (fromCurry bound))
+
+nextIntRange :: Int -> Int -> [Int]
+nextIntRange seed bound = randomRs (0,bound) (mkStdGen seed)
+
+getRandomSeed :: Result (C_IO C_Int)
+getRandomSeed = ioFunc0 (getStdRandom next)
+

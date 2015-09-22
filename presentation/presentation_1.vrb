@@ -1,0 +1,43 @@
+\frametitle{Comparison}
+\center
+\begin{table}
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{\textcolor{blue}{Factor}} & \textbf{\textcolor{red}{\textsc{Haskell}}} & \textbf{\textcolor{green}{\textsc{Prolog}}} \\
+\hline
+\textcolor{blue}{Evaluation} & \textcolor{red}{Lazy} & \textcolor{green}{Strict} \\
+\hline
+\textcolor{blue}{Type System} & \textcolor{red}{Strong} & \textcolor{green}{Weak} \\
+\hline
+\textcolor{blue}{Working} & \textcolor{red}{Pattern Matching} & \textcolor{green}{Unification} \\
+\hline
+\textcolor{blue}{Purity} & \textcolor{red}{Monadic / Pure} & \textcolor{green}{Ad-hoc} \\
+\hline
+\end{tabular}
+\caption{\textsc{Haskell} \cite{haskellorg} versus \textsc{Prolog} \cite{prologwiki}}
+\end{table}
+
+For example, consider the following code,
+
+\begin{table}
+\begin{tabular}{|c|c|}
+\hline
+
+\textbf{Pattern Matching} & \textbf{Unification} \\
+
+\hline
+\begin{lstlisting}
+let (x,y) = (1,2)
+x = 1
+y = 2
+\end{lstlisting} &
+\begin{lstlisting}
+(X,2) = (1,Y).
+X = 1.
+Y = 2.
+\end{lstlisting} \\
+
+\hline
+\end{tabular}
+\end{table}
+

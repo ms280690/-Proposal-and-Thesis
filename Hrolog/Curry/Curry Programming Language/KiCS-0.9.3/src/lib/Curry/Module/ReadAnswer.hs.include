@@ -1,0 +1,1 @@
+[ForFunction "prim_readAnswer",ForFunction "stdinUnbuffered",ForFunction "stdinBuffered"]

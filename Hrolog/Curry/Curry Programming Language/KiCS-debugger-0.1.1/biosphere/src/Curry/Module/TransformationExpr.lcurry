@@ -1,0 +1,203 @@
+Transformation of Expressions
+=============================
+
+Imports
+-------
+
+> import FlatCurry as FC
+> import FlatCurryGoodies
+> import AbstractCurry as AC
+> import AbstractHaskell
+
+> import SrcRef
+
+Import the converters from flat to abstract curry without any debug
+transformation:
+
+> import FlatToAbstractCurry
+
+Import the transformation monad `TM`:
+
+> import TransformationMonad
+
+Import utily and constants for debug information and hooks:
+
+> import TransformationDebugInfo
+
+> import TransformationComb
+
+Transformation
+--------------
+
+Transforms a flat curry expression to abstract curry using given module name
+and info tree containing the expressions source reference.
+
+> transformExpr :: Expr -> (String, String) -> [VarIndex] -> InfoTree -> TM CExpr
+> transformExpr expr (mod,fn) vars infoTree = 
+
+  Set initial info tree for this expression tree and extract the source
+  reference for expr:
+
+>   setInfoTree infoTree >>.
+
+>     trExpr var lit comb leT freE or casE br expr where
+
+    Wrap variables with the debugger monads' `return`:
+
+>     var  x        = ignoreVarRefs >>. ret (wrapReturn (xx x))
+
+>     lit l        = nextSrcRefs >>=. \srcRefs ->
+>                    ret $ transformLiteral l mod srcRefs
+>     comb ct n es = nextSrcRefs >>=. \srcRefs -> 
+>                    sequence es >>=. \ es' ->
+>                    (transformComb ct n es' mod srcRefs)
+>     leT vsbs e = nextSrcRefs >>=. \_ ->
+>                  case unzip vsbs of
+>                   (vs,bs) -> sequence bs >>=. \ bs' ->
+>                              e >>=. \ e' ->
+>                              ret $ (insHook "let" dummyDebugInfo)
+>                                    (transformLet (zip vs bs') e')
+> 
+>     freE is e = nextSrcRefs >>=. \_ ->
+>                 e >>=. ret . (insHook "free" dummyDebugInfo) . (transformFree is)
+>     or e1 e2  = nextSrcRefs >>=. \_ ->
+>                 sequence [e1,e2] >>=. \ [e1',e2'] -> 
+>                 freshVar >>=. \var' ->
+>                 ret $ (insHook "or" dummyDebugInfo) $
+>                       transformOr var' e1' e2'
+>     casE Flex e bs = skipNextVar >>.
+>                    e >>=. \ e' ->
+>                    sequence bs >>=. \ bs' ->
+>                    (transformCase Flex e' bs' (mod,fn) vars [])
+
+>     casE Rigid e bs = nextSrcRefs >>=. \srcRefs -> 
+>                    e >>=. \ e' ->
+>                    sequence bs >>=. \ bs' ->
+>                    (transformCase Rigid e' bs' (mod,fn) vars srcRefs)
+
+   Set up branches with already folded subexpression:
+
+>     br p e = nextSrcRefs >>=. \srcRefs ->
+>              e >>=. \e' -> ret $
+>                            CBranch (transformPattern p)
+>                                    ((insHook "branch" (brInfo srcRefs))
+>                                              (wrapEval e'))
+
+  Debug info for the branch hook (current src ref, no dynamic infos yet): TODO pattern variables as dynamic info
+
+>     brInfo srcRefs = debugInfo (createStaticInfo mod srcRefs)
+>                                (simpleDynInfo (presym "[]"))
+
+Literal
+-------
+
+> cpresym s = CSymbol (renameModule (prelude,s))
+
+> transformLiteral :: Literal -> String -> [SrcRef] -> CExpr
+> transformLiteral l mod srcRefs = let
+
+  Debug info for the literal hook (current src ref, no dynamic infos):
+
+>     litInfo = debugInfo (createStaticInfo mod srcRefs)
+>                         (simpleDynInfo (presym "[]"))
+>     wrap = (insHook "lit" litInfo) . wrapReturn in
+>   case l of
+>   (Intc i)   -> wrap $ createInt i
+>   (Charc _)  -> wrap $ cpresym "Char"  $$ CLit (convertLiteral l)
+>   (Floatc _) -> wrap $ cpresym "Float" $$ CLit (convertLiteral l)
+
+Converts an integer into the transformed integer type.
+
+> createInt :: Int -> CExpr
+> createInt i | i == 0 = cpresym "Zero"
+>             | i  > 0 = cpresym "Pos" $$ createNat i
+>             | i  < 0 = cpresym "Neg" $$ createNat (-i)
+
+Converts a natural number into the transformed natural number type.
+
+> createNat :: Int -> CExpr
+> createNat i | i == 1         = cpresym "IHi"
+>             | i `mod` 2 == 1 = cpresym "I" $$
+>                                createNat ((i-1) `div` 2)
+>             | i `mod` 2 == 0 = cpresym "O" $$
+>                                createNat (i `div` 2)
+
+Free
+----
+
+> transformFree :: [VarIndex] -> CExpr -> CExpr
+> transformFree _ _ = presym "error" $$ acyStr "free not implemented yet"
+
+A let is transformed in a corresponding sequence of statements in a `do`:
+Each variable defined in the let is assigned to it's evaluated expression as in
+the original code. The result expression is evaluated as last statement.
+
+Let
+---
+
+> transformLet :: [(VarIndex,CExpr)] -> CExpr -> CExpr
+> transformLet varExprs expr = CDoExpr $ pats ++ [CSExpr $ wrapEval expr]
+>   where
+>     pats = map (\(var,expr') -> (CSPat (px var) expr')) varExprs
+
+Or
+--
+
+Evaluates both arguments first, wraps the `or` with an eval.
+Calls the operator `?` in `SPrelude`. Needs to be implemented manually in the `MPrelude.hs`.
+
+> transformOr :: Int -> CExpr -> CExpr -> CExpr
+> transformOr var expr0 expr1 = CDoExpr $ pats ++ [(CSExpr expr)]
+>   where
+>     expr = comb (renameModule (prelude,"?")) [xx var,xx (var+1)]
+>     pats = [CSPat (px var) expr0, CSPat (px (var+1)) expr1]
+
+
+Case
+----
+
+A case construct is transformed using the `do` notation.
+The expression is evaluated first, the result (stored in a fresh variable, why
+the transformation is required here) is the parameter for the new case.
+
+> transformCase :: CaseType -> CExpr -> [CBranchExpr] -> (String,String) -> [VarIndex] -> [SrcRef] -> TM CExpr
+> transformCase ct expr exprs qn@(mod,_) vars srcRefs = freshVar >>=. \var ->
+>   ret $ 
+>     CDoExpr [
+>              (CSPat (px var) expr),
+>              (CSExpr (insHook "case" (info var) (CCase (xx var) (branches var))))
+>             ]
+
+>   where
+
+  Debug info for the hook, contains current source reference as static info
+  and term of the argument as dynamic info.
+
+>     info var    = debugInfo (createStaticInfo mod srcRefs)
+>                             (simpleDynInfo (list [genTermCallVar var]))
+
+  Add an additional branch to catch non exhaustive patterns:
+
+>     branches var    = exprs ++ [errorBranch var]
+>     errorBranch var = CBranch (CPVar (0,"_"))
+>                               (CSymbol ("DM","treatCase") $$$
+>                                [(exceptionHook nepType (info var)),CSymbol (renameFunc qn) $$$ map xx (init vars),xx var])
+>     nepType         = if ct == Flex then "nepRules" else "nepCase"
+
+> init = reverse . tail . reverse
+
+Pattern
+-------
+
+Patterns need to be transformed to have constructors renamed.
+
+> transformPattern (Pattern name is) =
+>   CPComb (renameCons name) $ map (CPVar . convertVariable) is
+> transformPattern (LPattern l) = 
+>   case l of
+
+TODO: int matching (SNat)
+
+>     (Intc _) -> CPLit $ convertLiteral l
+>     _        -> CPLit $ convertLiteral l
+

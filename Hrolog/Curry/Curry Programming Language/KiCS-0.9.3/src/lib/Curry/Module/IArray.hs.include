@@ -1,0 +1,1 @@
+[ForType "Array" Nothing,ForFunction "array",ForFunction "!",ForFunction "bounds",ForFunction "assocs",ForFunction "//",ForFunction "accum"]

@@ -1,0 +1,10 @@
+{- Auto generated stubs for external functions and types
+   Remove this comment to suppress warnings. -}
+module Curry.DebugModule.Interactive where
+ 
+strict_printTerm ::
+                 (DM.DM dm, DI.GenTerm a) =>
+                   a ->
+                     dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_printTerm x0
+  = hook_strict_printTerm x0 (Prelude.error "not implemented")

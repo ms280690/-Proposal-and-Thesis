@@ -1,0 +1,5 @@
+CurryProg "Trace"
+ ["Prelude"]
+ []
+ [CFunc ("Trace","trace") 1 Public (CFuncType (CTVar (0,"a")) (CTVar (0,"a"))) (CRules CFlex [CRule [CPVar (0,"x")] [(CSymbol ("Prelude","success"),CVar (0,"x"))] []])]
+ []

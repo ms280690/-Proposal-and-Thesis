@@ -1,0 +1,43 @@
+[ForFunction "getClockTime"]
+
+import System.Time hiding (getClockTime)
+import qualified System.Time (getClockTime) 
+import Data.Ix
+
+instance ConvertCH C_ClockTime ClockTime where
+  fromCurry (C_CTime i) = TOD (fromCurry i) 0
+  toCurry (TOD i _) = C_CTime (toCurry i)
+
+instance ConvertCH C_CalendarTime CalendarTime where
+  fromCurry (C_CalendarTime y m d h min s tz ) = 
+             CalendarTime (fromCurry y) 
+                          (toEnum (fromCurry m-1))
+                          (fromCurry d)
+                          (fromCurry h)
+                          (fromCurry min)
+                          (fromCurry s)
+                          0 undefined undefined undefined
+                          (fromCurry tz)
+                          undefined
+           
+  toCurry (CalendarTime y m d h min s _ _ _ _ tz _) = 
+          C_CalendarTime (toCurry y) 
+                         (toCurry (fromEnum m)+1) 
+                         (toCurry d)
+                         (toCurry h)
+                         (toCurry min)
+                         (toCurry s)
+                         (toCurry tz)
+
+
+getClockTime :: Result (C_IO C_ClockTime)
+getClockTime = ioFunc0 (System.Time.getClockTime)
+
+prim_toCalendarTime :: C_ClockTime -> Result (C_IO C_CalendarTime)
+prim_toCalendarTime = ioFunc1 toCalendarTime
+
+prim_toUTCTime :: C_ClockTime -> Result C_CalendarTime
+prim_toUTCTime = extFunc1 toUTCTime
+
+prim_toClockTime :: C_CalendarTime -> Result C_ClockTime
+prim_toClockTime x _ = toCurry (toClockTime (fromCurry x))

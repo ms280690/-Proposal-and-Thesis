@@ -1,0 +1,263 @@
+import qualified Char
+import qualified Curry.Debugger.ShowTerm as ST
+
+instance DI.GenTerm Float where
+  genTerm FloatUnderscore = DI.TermUnderscore (DI.SrcID "Prelude" 2)
+  genTerm (Float f) = DI.TermFloat f
+ 
+instance DI.GenTerm Char where
+  genTerm CharUnderscore = DI.TermUnderscore (DI.SrcID "Prelude" 0)
+  genTerm (Char c) = DI.TermChar c
+
+instance DI.GenTerm (IO dm a) where
+  genTerm IOUnderscore = DI.TermUnderscore (DI.SrcID "Prelude" Prelude.undefined)
+  genTerm x0 = Prelude.error "not implemented"
+
+natToHInt :: Nat -> Prelude.Int
+natToHInt IHi = 1
+natToHInt (O x) = 2 Prelude.* natToHInt x
+natToHInt (I x) = 2 Prelude.* natToHInt x Prelude.+ 1
+
+intToHInt :: Int -> Prelude.Int
+intToHInt (Neg n) = Prelude.negate (natToHInt n)
+intToHInt (Pos n) = natToHInt n
+intToHInt Zero = 0
+
+hIntToNat :: Prelude.Integral n => n -> Nat 
+hIntToNat 1 = IHi
+hIntToNat i = case Prelude.divMod i 2 of
+  (d,0) -> O (hIntToNat d)
+  (d,1) -> I (hIntToNat d)
+
+hIntToInt :: (Prelude.Integral n) => n -> Int 
+hIntToInt i | i Prelude.<  0 = Neg (hIntToNat (Prelude.negate i))
+            | i Prelude.== 0 = Zero
+            | Prelude.otherwise = Pos (hIntToNat i)
+
+listToHList :: List a -> [a]
+listToHList Nil = []
+listToHList (Cons x xs) = x:listToHList xs
+
+hListToList :: [a] -> List a
+hListToList [] = Nil
+hListToList (x:xs) = (Cons x (hListToList xs))
+
+charToHChar :: Char  -> Prelude.Char
+charToHChar (Char c) = c
+
+hCharToChar :: Prelude.Char -> Char
+hCharToChar c = Char c
+
+hStrToStr :: Prelude.String -> List Char
+hStrToStr str = hListToList (Prelude.map hCharToChar str)
+
+strToHStr :: List Char -> Prelude.String
+strToHStr listChar = Prelude.map charToHChar (listToHList listChar)
+
+
+data Float = Float Prelude.Float | FloatUnderscore deriving (Data.Generics.Typeable, Data.Generics.Data)
+ 
+data Char = Char Prelude.Char | CharUnderscore deriving (Data.Generics.Typeable, Data.Generics.Data)
+ 
+-- data (DM.DM dm) => IO a = IO (Prelude.IO a) | IOUnderscore
+-- data (DM.DM dm) => IO a = IO a | IOUnderscore
+-- data IO a = IO (World -> (a,World))
+-- data IO a = IO (DM.Func dm (Unit) (a,Unit))
+data World = World
+
+data (DM.DM dm) => IO dm a = IO (World -> dm (a,World)) | IOUnderscore -- (dm :: * -> *)
+
+instance Data.Generics.Typeable (IO dm a)
+instance Data.Generics.Data (IO dm a)
+
+-- simple not qualified short cuts to Prelude
+
+return :: DM.DM dm => a -> dm a
+return = Prelude.return
+
+(.) = (Prelude..)
+
+($) = (Prelude.$)
+
+-- IO return for the DebugMonad
+curryReturn :: DM.DM dm => a -> dm (IO dm a)
+curryReturn x = return (IO (\w -> return (x,w)))
+
+-- local declaration for ? of the DebugMonad module
+(?) :: (DM.DM dm, DI.GenTerm a) => a -> a -> dm a
+x ? y = x DM.? y
+
+-- putChar :: IO ()
+-- implementation just returns () representation
+strict_prim_putChar ::
+                    (DM.DM dm) => Char -> dm (IO dm (Unit))
+strict_prim_putChar x0 = hook_strict_prim_putChar x0 (curryReturn Unit)
+
+-- getChar :: IO Char
+strict_getChar :: (DM.DM dm) => dm (IO dm Char)
+strict_getChar =
+     hook_strict_getChar (do c <- DM.getNextExtVal; curryReturn (Char c))
+
+-- $! :: (a -> b) -> a -> b
+op_DollarEMark ::
+               (DM.DM dm, DI.GenTerm a, DI.GenTerm b) =>
+                 DM.Func dm a b -> a -> dm b
+op_DollarEMark x0 x1
+  = hook_op_DollarEMark x0 x1 (curryApply x0 x1)
+ 
+-- $!! :: (a -> b) -> a -> b
+op_DollarEMarkEMark ::
+                    (DM.DM dm, DI.GenTerm a, DI.GenTerm b) =>
+                      DM.Func dm a b -> a -> dm b
+op_DollarEMarkEMark x0 x1
+  = hook_op_DollarEMarkEMark x0 x1 (curryApply x0 x1)
+ 
+-- $# :: (a -> b) -> a -> b
+op_DollarRhomb ::
+               (DM.DM dm, DI.GenTerm a, DI.GenTerm b) =>
+                 DM.Func dm a b -> a -> dm b
+op_DollarRhomb x0 x1
+  = hook_op_DollarRhomb x0 x1 (curryApply x0 x1)
+ 
+-- $## :: (a -> b) -> a -> b
+op_DollarRhombRhomb ::
+                    (DM.DM dm, DI.GenTerm a, DI.GenTerm b) =>
+                      DM.Func dm a b -> a -> dm b
+op_DollarRhombRhomb x0 x1
+  = hook_op_DollarRhombRhomb x0 x1 (curryApply x0 x1)
+ 
+-- prim_error :: String -> a
+strict_prim_error ::
+                  (DM.DM dm, DI.GenTerm a) =>
+                    List Char -> dm a
+strict_prim_error x0
+  = hook_strict_prim_error x0 
+      (DM.errorHook (Prelude.map charToHChar (listToHList x0)))
+ 
+-- failed :: a
+strict_failed :: (DM.DM dm, DI.GenTerm a) => dm a
+strict_failed = hook_strict_failed (return DM.failed)
+
+
+-- == :: a -> a -> Bool
+op_EqEq ::
+        (DM.DM dm, DI.GenTerm a) => a -> a -> dm Bool
+op_EqEq x0 x1
+  = hook_op_EqEq x0 x1 (x0 `eqeq` x1)
+      
+-- performs an equality check on given elements
+eqeq :: (DM.DM dm, DI.GenTerm a) => a -> a -> dm Bool
+eqeq x0 x1 = DM.treatCase' Prelude.False (eqeqx x0) x1 where
+  eqeqx x y  | DI.genTerm x Prelude.== DI.genTerm y = return True
+             | Prelude.otherwise                    = return False
+
+ 
+-- prim_ord :: Char -> Int
+strict_prim_ord :: (DM.DM dm) => Char -> dm (Int)
+strict_prim_ord x0@(Char c)
+  = hook_strict_prim_ord x0 (return (hIntToInt (Char.ord c)))
+ 
+-- prim_chr :: Int -> Char
+strict_prim_chr :: (DM.DM dm) => Int -> dm Char
+strict_prim_chr x0
+ = hook_strict_prim_chr x0 (return (Char (Char.chr (intToHInt x0))))
+ 
+-- === :: a -> a -> Bool	(???)
+op_EqEqEq ::
+          (DM.DM dm, DI.GenTerm a) => a -> a -> dm Bool
+op_EqEqEq x0 x1
+  = hook_op_EqEqEq x0 x1 (x0 `eqeq` x1)
+ 
+-- & :: Success -> Success -> Success	(TODO)
+op_And ::
+       (DM.DM dm) => Success -> Success -> dm Success
+op_And x0 x1 = hook_op_And x0 x1 (Prelude.error "not implemented")
+
+-- >>= :: IO a -> (a -> IO b) -> IO b
+op_GtGtEq ::
+          (DM.DM dm, DI.GenTerm a, DI.GenTerm b) =>
+            IO dm a -> DM.Func dm a (IO dm b) -> dm (IO dm b)
+op_GtGtEq a1@(IO a) k
+  = hook_op_GtGtEq a1 k (return (IO (\w -> do
+       DM.popOracle
+       (r, w') <- a w 
+       DM.popOracle
+       IO f <- curryApply k r
+       DM.popOracle
+       f w')))
+ 
+-- return :: a -> IO a
+strict_return ::
+              (DM.DM dm, DI.GenTerm a) => a -> dm (IO dm a)
+strict_return x
+ = hook_strict_return x (curryReturn x)
+ 
+-- prim_readFile :: String -> IO String	(TODO???)
+strict_prim_readFile ::
+                     (DM.DM dm) =>
+                       List Char -> dm (IO dm (List Char))
+strict_prim_readFile x0
+  = hook_strict_prim_readFile x0 (do f <- DM.getNextExtVal; curryReturn (hStrToStr f))
+
+-- prim_writeFile :: String -> String -> IO ()
+-- implementation just returns () representation
+strict_prim_writeFile ::
+                      (DM.DM dm) =>
+                        List Char -> List Char -> dm (IO dm (Unit))
+strict_prim_writeFile x0 x1
+  = hook_strict_prim_writeFile x0 x1 (curryReturn Unit)
+ 
+-- prim_appendFile :: String -> String -> IO ()
+-- implementation just returns () representation
+strict_prim_appendFile ::
+                       (DM.DM dm) =>
+                         List Char -> List Char -> dm (IO dm (Unit))
+strict_prim_appendFile x0 x1
+  = hook_strict_prim_appendFile x0 x1 (curryReturn Unit)
+ 
+-- catchFail :: IO a -> IO a -> IO a (TODO)
+strict_catchFail ::
+                 (DM.DM dm, DI.GenTerm a) =>
+                   IO dm a -> IO dm a -> dm (IO dm a)
+strict_catchFail x0 x1
+  = hook_strict_catchFail x0 x1 (Prelude.error "not implemented")
+ 
+-- prim_show :: a -> String
+strict_prim_show ::
+                 (DM.DM dm, DI.GenTerm a) =>
+                   a -> dm (List Char)
+strict_prim_show x0
+  = hook_strict_prim_show x0 (show x0)
+
+show x0 = DM.treatCase' Prelude.False (return . show') x0 where
+  show' x = hStrToStr hStr where
+    hStr = ST.showGenTerm x
+ 
+-- getSearchTree :: a -> IO (SearchTree a) (TODO)
+strict_getSearchTree ::
+                     (DM.DM dm, DI.GenTerm a) =>
+                       a -> dm (IO dm (SearchTree a))
+strict_getSearchTree x0
+  = hook_strict_getSearchTree x0 (Prelude.error "not implemented")
+ 
+-- apply for the DebugMonad
+curryApply :: DM.DM dm => DM.Func dm a b -> a -> dm b
+curryApply (DM.FuncRep _ f) x = f x
+
+-- apply :: (a -> b) -> a -> b
+strict_apply :: (DM.DM dm, DI.GenTerm a,DI.GenTerm b) => DM.Func dm a b -> a -> dm b
+strict_apply f x = hook_strict_apply f x (curryApply f x)
+ 
+-- cond :: Success -> a -> a	(TODO)
+strict_cond ::
+            (DM.DM dm, DI.GenTerm a) => Success -> a -> dm a
+strict_cond x0 x1
+  = hook_strict_cond x0 x1 (Prelude.error "not implemented")
+ 
+-- =:<= :: a -> a -> Success	(TODO)
+op_EqColonLtEq ::
+               (DM.DM dm, DI.GenTerm a) =>
+                 a -> a -> dm Success
+op_EqColonLtEq x0 x1
+  = hook_op_EqColonLtEq x0 x1 (Prelude.error "not implemented")
+

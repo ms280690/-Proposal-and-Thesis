@@ -1,0 +1,1 @@
+Prog "OracleTrace" ["CEventOracle","Oracle","IOExts","Trace","Prelude","OraclePrelude"] [] [Func ("OracleTrace","trace") 2 Public (FuncType (TVar 0) (FuncType (TCons ("CEventOracle","Ref") []) (TVar 0))) (Rule [2,1] (Comb FuncCall ("CEventOracle","collapse") [Var 1,Var 2]))] []

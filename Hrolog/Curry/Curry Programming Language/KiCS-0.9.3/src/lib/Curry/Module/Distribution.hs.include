@@ -1,0 +1,40 @@
+[ForFunction "curryCompiler"
+,ForFunction "curryCompilerMajorVersion"
+,ForFunction "curryCompilerMinorVersion"
+,ForFunction "curryRuntime"
+,ForFunction "curryRuntimeMajorVersion"
+,ForFunction "curryRuntimeMinorVersion"
+,ForFunction "installDir"
+]
+
+import Curry.Files.KiCSPath   
+import Curry.Files.CymakePath 
+
+curryCompiler :: Result C_String
+curryCompiler _ = toCurry "kics"
+
+curryCompilerMajorVersion :: Result C_Int
+curryCompilerMajorVersion _ = 0
+
+curryCompilerMinorVersion :: Result C_Int
+curryCompilerMinorVersion _ = 8
+
+getStdLibDir :: Result (C_IO C_String)
+getStdLibDir = ioFunc0 getKiCSLibDir
+
+-- finding the frontend binary
+getFrontendCall :: Result (C_IO C_String)
+getFrontendCall = ioFunc0 getCymake
+
+installDir :: Result C_String
+installDir _ = toCurry ""
+
+curryRuntime :: Result C_String
+curryRuntime _ = toCurry "ghc"
+
+curryRuntimeMajorVersion :: Result C_Int
+curryRuntimeMajorVersion _ = 6
+
+curryRuntimeMinorVersion :: Result C_Int
+curryRuntimeMinorVersion _ = 10
+

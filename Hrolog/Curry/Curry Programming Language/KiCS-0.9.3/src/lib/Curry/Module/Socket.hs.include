@@ -1,0 +1,62 @@
+[ForType "Socket" Nothing
+,ForFunction "prim_listenOn"
+,ForFunction "listenOnFresh"
+,ForFunction "prim_socketListen"
+,ForFunction "prim_socketAccept"
+,ForFunction "prim_waitForSocketAccept"
+,ForFunction "prim_connectToSocket"
+]
+
+import Network
+import Network.Socket 
+import Control.Concurrent
+import System.IO (Handle)
+
+type C_Socket = Prim Socket
+
+instance Read Socket where
+
+instance Generate Socket where
+  genFree  = error "no random sockets"
+  maxArity = error "no narrowing on sockets"
+
+instance ConvertCH C_Int PortID where
+  toCurry (PortNumber i) = toCurry (toInteger i)
+  fromCurry i = PortNumber (fromInteger (fromCurry i))
+
+prim_listenOn :: C_Int -> Result (C_IO C_Socket)
+prim_listenOn  = Curry.Module.Prelude.ioFunc1 listenOn 
+
+listenOnFresh :: Result (C_IO (T2 C_Int C_Socket))
+listenOnFresh  = Curry.Module.Prelude.ioFunc0 listenOnFreshPort
+
+listenOnFreshPort :: IO (PortID,Socket)
+listenOnFreshPort = do
+  s <- listenOn (PortNumber aNY_PORT)
+  p <- Network.socketPort s
+  Prelude.return (p,s)
+
+
+prim_socketListen :: C_Socket -> C_Int -> Result (C_IO T0)
+prim_socketListen  = Curry.Module.Prelude.ioFunc2 listen
+
+prim_socketAccept :: C_Socket -> Result (C_IO (T2 (List C_Char) C_Handle))
+prim_socketAccept  = 
+  ioFunc1 (\ s -> do {(h,s,_) <- Network.accept s; Prelude.return (s,One h)})
+
+prim_waitForSocketAccept :: C_Socket -> C_Int -> Result (C_IO (C_Maybe (T2 (List C_Char) C_Handle)))
+prim_waitForSocketAccept  = Curry.Module.Prelude.ioFunc2 wait
+
+wait :: Socket -> Int -> IO (Maybe (String,IOHandle))
+wait s t = do
+  mv <- newEmptyMVar
+  tacc <- forkIO (do {(h,s,_) <- Network.accept s; putMVar mv (Just (s,One h))})
+  ttim <- forkIO (do {threadDelay (t*1000); putMVar mv Nothing})
+  res <- takeMVar mv
+  maybe (killThread tacc) (\_ -> killThread ttim) res
+  Prelude.return res
+
+prim_connectToSocket :: List C_Char -> C_Int -> Result (C_IO C_Handle)
+prim_connectToSocket  = 
+  ioFunc2 (\ s i -> do {ct <- connectTo s i; Prelude.return (One ct)})
+

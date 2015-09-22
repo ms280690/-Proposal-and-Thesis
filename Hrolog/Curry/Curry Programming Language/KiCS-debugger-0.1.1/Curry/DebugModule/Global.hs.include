@@ -1,0 +1,28 @@
+{- Auto generated stubs for external functions and types
+   Remove this comment to suppress warnings. -}
+module Curry.DebugModule.Global where
+ 
+instance DI.GenTerm (Global dm a) where
+        genTerm x0 = Prelude.error "not implemented"
+ 
+data (DM.DM dm, DI.GenTerm a) => Global dm a = Global a
+ 
+strict_global ::
+              (DM.DM dm, DI.GenTerm a) => a -> GlobalSpec -> dm (Global a)
+strict_global x0 x1
+  = hook_strict_global x0 x1 (Prelude.error "not implemented")
+ 
+strict_prim_readGlobal ::
+                       (DM.DM dm, DI.GenTerm a) =>
+                         Global a -> dm (Curry.DebugModule.Prelude.IO dm a)
+strict_prim_readGlobal x0
+  = hook_strict_prim_readGlobal x0 (Prelude.error "not implemented")
+ 
+strict_prim_writeGlobal ::
+                        (DM.DM dm, DI.GenTerm a) =>
+                          Global a ->
+                            a ->
+                              dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_prim_writeGlobal x0 x1
+  = hook_strict_prim_writeGlobal x0 x1
+      (Prelude.error "not implemented")

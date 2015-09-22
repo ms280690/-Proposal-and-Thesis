@@ -1,0 +1,470 @@
+GenTerm Instances
+=================
+
+This module contains the transformation code to generate instance declarations
+for `GenStaticInfo`, `DebugType` and `Typeable`.
+
+Imports
+-------
+
+> import List
+> import Maybe
+
+> import FlatCurry as FC
+> import AbstractCurry as AC
+> import AbstractHaskell
+
+> import SrcRef
+
+Import the converters from flat to abstract curry without any debug
+transformation:
+
+> import FlatToAbstractCurry
+
+Import utily and constants for Debug Infos:
+
+> import TransformationDebugInfo
+
+
+Short cuts
+----------
+
+> genName s = (dataGenericsImport,s)
+> genSym = CSymbol . genName
+
+
+Instance Declarations for `GenTerm`
+-----------------------------------
+
+> instancesGenTerm :: [TypeDecl] -> [InfoTree] -> [FC.QName] -> [InstanceDecl]
+> instancesGenTerm [] _ _  = []
+
+Skip type synonyms and external types without constructors:
+
+> instancesGenTerm ((FC.TypeSyn _ _ _ _):tds) (_:its) hoTypes =
+>   instancesGenTerm tds its hoTypes
+> instancesGenTerm ((FC.Type _ _ _ []):tds) (_:its) hoTypes =
+>   instancesGenTerm tds its hoTypes
+
+Create instance for regular types:
+
+> instancesGenTerm (td@(FC.Type _ _ _ cs@(_:_)):tds) (it:its) hoTypes =
+>   instanceGenTerm td it hoTypes : instancesGenTerm tds its hoTypes
+
+
+Creates the `GenTerm` instance for given type declaration, it's static info tree and the list of higher order types.
+
+> instanceGenTerm :: TypeDecl -> InfoTree -> [FC.QName] -> InstanceDecl
+> instanceGenTerm (FC.Type qn@(mod,_) _ tvars conss) infoTree hoTypes =
+>   (Instance constraints'
+>             (TypeClass staticInfoClass [CTCons qn' (map CTVar tvars'')]) 
+>             [func])
+>   where
+>     tvar = (-1,debugTVarName)
+>     tvars' = if elem qn hoTypes then tvar:tvars'' else tvars''
+>     tvars'' = map convertTypeVariable tvars
+>     qn' = renameType qn
+
+If type variables are used in the data type, a class constraint ensuring `GenTerm` is required for each type variable.
+
+>     constraints = map gtConstraint tvars''
+>     constraints' = if elem qn hoTypes
+>                    then (dmConstraint tvar):constraints
+>                    else constraints
+>     dmConstraint = constraint debugMonadClass
+>     gtConstraint = constraint staticInfoClass
+
+  The term generating function of the instance contains a rule for each regular constructor and an additional rule to handle all constructors added by the transformation with a call to `genericTerm`:
+
+>     func = (HFunc staticInfoFunc 1 AC.Public [] untyped
+>            (rules (consRules++[defaultRule])))
+
+  The last default rule calls `genericTerm` to handle constructors added by the transformation:
+
+>     defaultRule = simpleRule [px 1] (comb genericInfoFunc
+>                                           [createStaticInfo mod srcRef,xx 1])
+>     srcRef      = fst (nextStaticInfo infoTree)
+>     consRules   = zipWith createConsRule conss consTrees
+>     consTrees   = infoChildren $ snd $ nextStaticInfo infoTree
+
+Creates a function rule that matches given constructor left-side in patterns and constructs a `Term` containing the term representation of those arguments.
+The term includes a source reference extracted from the `InfoTree`.
+
+> createConsRule :: ConsDecl -> InfoTree -> CRule
+> createConsRule (Cons qn@(mod,name) arity _ _) infoTree =
+>    simpleRule [pat] $ comb staticInfoCons
+>                            [acyStr name,
+>                             createStaticInfo mod srcRef,
+>                             args]
+>     where
+
+  Pattern to match the constructor, `genTerm` calls to arguments and the constructor's source reference:
+
+>       pat    = (CPComb qn' (map px [1..arity]))
+>       args   = list $ (map genTermCallVar [1..arity])
+>       srcRef = fst (nextStaticInfo infoTree)
+>       qn'    = renameCons qn
+
+
+Instance Declarations for `Data` and `Typeable`
+-----------------------------------------------
+
+Generates instances for generics if not derivable (all constructors less than 8 arguments).
+The generic instances require also additional functions.
+
+> instancesGenerics :: [TypeDecl] -> [FC.QName] -> ([InstanceDecl],[HFuncDecl])
+> instancesGenerics [] _  = ([],[])
+
+Skip type synonyms and external types without constructors:
+
+> instancesGenerics ((FC.TypeSyn _ _ _ _):tds) hoTypes =
+>   instancesGenerics tds hoTypes
+> instancesGenerics ((FC.Type _ _ _ []):tds) hoTypes =
+>   instancesGenerics tds hoTypes
+
+Create instances for regular types:
+
+> instancesGenerics (td@(FC.Type _ _ _ cs@(_:_)):tds) hoTypes =
+>   if maxArgs cs < 8 then rec else rec'
+>     where
+>       (iT,fsT)    = instanceTypeable td hoTypes
+>       (iD,fsD)    = instanceData     td hoTypes
+>       rec@(is,fs) = instancesGenerics tds hoTypes
+>       rec' = (iT:iD:is,fsT++fsD++fs)
+>       maxArgs = foldr max 0 . map numArgs
+>       numArgs (Cons _ arity _ _) = arity
+
+Typeable
+========
+
+Creates a `Typeable` instance for given type.
+
+> instanceTypeable :: TypeDecl -> [FC.QName] -> (InstanceDecl,[HFuncDecl])
+> instanceTypeable td@(FC.Type qn _ tvars _) hoTypes =
+>   (inst,[])
+>   where
+>     inst    = (Instance (map (constraint typeableClass) tvars'')
+>                         (TypeClass typeableClass [CTCons qn' (map CTVar tvars')])
+>                         [instFunc])
+>     tvar     = (-1,debugTVarName)
+>     tvars'   = if elem qn hoTypes then tvar:tvars'' else tvars''
+>     tvars''  = map convertTypeVariable tvars
+>     qn'      = renameType qn
+>     instFunc = mkTypeOf td
+
+typeOf _ = mkTyConApp (mkTyCon "Module.Type") [typeOf ta, ..., typeOf tz]
+  where
+    ta :: a
+    ta = undefined
+    ...
+    tz :: z
+    tz = undefined
+
+> mkTypeOf (FC.Type qn _ tvars _) = untypedFunc ("","typeOf") [rule]
+>   where
+>     rule   = noGuardRule [pat] tyExpr decls
+>     pat    = CPVar (-1,"_")
+>     tyCon  = mkTyConExpr qn
+>     tyExpr = genSym "mkTyConApp" $$$ [tyCon, list (map mkTVarTypeOf tvars)]
+>     decls  = map mkTVarUndef tvars
+
+> mkTVarType i = CVar (i,mkTVarTypeName i)
+
+> mkTVarTypeName i = "t" ++ mkTVarName i
+
+> mkTVarName i = snd $ convertTypeVariable i
+
+(...) where
+  ta :: a
+  ta = undefined
+
+> mkTVarUndef i = CLocalFunc (CFunc name 0 AC.Public typ (rules [rule]))
+>   where
+>     name = ("",mkTVarTypeName i)
+>     typ  = CTVar (i,mkTVarName i)
+>     rule = constantRule $ CSymbol (prelude,"undefined")
+
+typeOf ta
+
+> mkTVarTypeOf i = CSymbol (dataGenericsImport,"typeOf") $$ mkTVarType i
+
+
+mkTyCon "Module.Type"
+
+> mkTyConExpr qn = genSym "mkTyCon" $$ acyStr (mod++"."++name)
+>   where (mod,name) = renameType qn
+
+Data
+====
+
+Creates a `Data` instance for given type.
+
+> instanceData :: TypeDecl -> [FC.QName] -> (InstanceDecl,[HFuncDecl])
+> instanceData td@(FC.Type qn _ tvars conss) hoTypes =
+>   (inst,funcs)
+>   where
+
+  Instance:
+
+>     inst    = (Instance (map (constraint dataClass) tvars')
+>                         (TypeClass dataClass [CTCons qn' (map CTVar tvars')]) 
+>                          instFuncs)
+>     tvar    = (-1,debugTVarName)
+>     tvars'  = if elem qn hoTypes then tvar:tvars'' else tvars''
+>     tvars'' = map convertTypeVariable tvars
+>     qn'@(mod,name) = renameType qn
+>     instFuncs = [mkGfoldl conss,
+>                  mkGunfold conss,
+>                  mkToConstr conss,
+>                  mkDataTypeOf tyName]
+
+  Additional functions ty_<Type> and con_<Cons> (for each constructor):
+
+>     funcs     = mkDataTypeFunc qn' tyName consFuncs : consFuncs
+>     consFuncs = map (mkDataConsFunc tyName) conss
+>     tyName    = (mod,"ty_"++name)
+
+Helpers for class functions
+
+gfoldl k z (C1 a b) = z C1 `k` a `k` b  == k (k (z C1) a ) b
+gfoldl k z C2       = z C2              == z C2
+
+> mkGfoldl conss = HFunc ("","gfoldl") 1 AC.Public []
+>                          untyped (rules consRules)
+>   where
+>     consRules = map mkGfoldlRule conss
+
+> mkGfoldlRule (Cons qn arity _ _) =
+>   simpleRule [patK,patZ,patCons] (mkGfoldlExpr qn' arity)
+>     where
+
+  Patterns to match two functions and the constructor:
+
+>       patK = CPVar (-1,"k")
+>       patZ = CPVar (0,"z")
+>       patCons = (CPComb qn' (map px [1..arity]))
+>       qn'@(mod,name) = renameCons qn
+
+> mkGfoldlExpr qn n = case n of
+>   0 -> CSymbol ("","z") $$ CSymbol qn
+>   _ -> CSymbol ("","k") $$ mkGfoldlExpr qn (n-1) $$ xx n
+
+gunfold k z c = case constrIndex c of
+                         1 -> k (k (z C1))
+                         2 -> z C2
+
+> mkGunfold conss = untypedFunc ("","gunfold") [rule]
+>   where
+>     rule = simpleRule [patK,patZ,patC] caseExpr
+
+  Patterns to match two functions and the constructor:
+
+>     patK = CPVar (-1,"k")
+>     patZ = CPVar (0,"z")
+>     patC = CPVar (1,"c")
+
+  Case to match all constructor indexes:
+
+>     caseExpr = CCase (comb (dataGenericsImport,"constrIndex") [CVar (1,"c")])
+>                      branches
+>     branches = zipWith mkGunfoldBranch [1..(length conss)] conss
+
+> mkGunfoldBranch i (Cons qn arity _ _) =
+>   CBranch (CPLit (CIntc i)) (mkGunfoldExpr (renameCons qn) arity)
+
+> mkGunfoldExpr qn n = case n of
+>   0 -> CSymbol ("","z") $$ CSymbol qn
+>   _ -> CSymbol ("","k") $$ mkGunfoldExpr qn (n-1)
+
+
+toConstr (C1 _ _) = con_C1
+toConstr C2       = con_C2
+
+> mkToConstr conss = untypedFunc ("","toConstr") consRules
+>   where
+>     consRules = map mkToConstrRule conss
+
+> mkToConstrRule (Cons qn arity _ _) =
+>    simpleRule [pat] (CSymbol (mod,"con_"++name))
+>     where
+
+  Pattern to match the constructor:
+
+>       pat = CPComb qn' (take arity (repeat (CPVar (-1,"_"))))
+>       qn'@(mod,name) = renameCons qn
+
+dataTypeOf _ = ty_T
+
+> mkDataTypeOf tyName = untypedFunc ("","dataTypeOf") [rule]
+>   where rule = simpleRule [CPVar (-1,"_")] expr
+>         expr = CSymbol tyName
+
+
+
+Helpers for additional functions
+
+ty_T   = mkDataType "Module.T" [con_C1, con_C2]
+
+> mkDataTypeFunc (mod,name) tyName conss = constantFunc tyName expr
+>   where expr  = comb (dataGenericsImport,"mkDataType") args
+>         args  = [acyStr (mod++"."++name), calls]
+>         calls = list (map call conss)
+>         call (HFunc name _ _ _ _ _) = CSymbol name
+
+con_C1 = mkConstr ty_T "C1" [] Prefix
+con_C2 = mkConstr ty_T "C2" [] Prefix
+
+> mkDataConsFunc tyName (Cons qn _ _ _) = constantFunc (mod,"con_"++name) expr
+>   where (mod,name) = renameCons qn
+>         expr       = comb (dataGenericsImport,"mkConstr") args
+>         args       = [CSymbol tyName,
+>                       acyStr name,
+>                       list [],
+>                       CSymbol (dataGenericsImport,"Prefix")]
+
+
+	Instance Declarations for `GenTerm` and 
+	---------------------------------------------
+
+	Creates `GenTerm` instance declarations for data types with constructors.
+	Type synonyms and data types without constructors (external types) are skipped.
+	The instance declarations requires source references given by the 2nd argument.
+
+	> createInstanceDecls :: [HTypeDecl] -> [InfoTree] -> [InstanceDecl]
+	> createInstanceDecls [] _                           = []
+
+	Skip type synonyms:
+
+	> createInstanceDecls ((HTypeDecl _ (CTypeSyn _ _ _ _) _):cs) (_:ts) =
+	>   createInstanceDecls cs ts
+
+	Skip data types without constructors:
+
+	> createInstanceDecls ((HTypeDecl _ (CType _ _ _ []) _):cs) (_:ts)   =
+	>   createInstanceDecls cs ts
+
+	Add instance for data type with constructors.
+
+	> createInstanceDecls ((HTypeDecl _ typ@(CType _ _ _ cs@(_:_)) _):ts) (tree:trees) =
+	>   if maxArgs cs < 8 then l else createTypeableInstance typ :
+	>                                 createDataInstance typ : l
+	>     where
+	>       l = (createInstanceDecl typ tree) : (createInstanceDecls ts trees)
+	>       maxArgs = foldr max 0 . map numArgs
+	>       numArgs (CCons _ arity _ _) = arity
+
+
+	Creates an `GenTerm` instance declaration for given data type.
+	Takes also an `InfoTree` containing the source reference for the type. The
+	reference is ignored, but the children are source references for the
+	constructors of the type.
+	The created declaration provides a function per constructor of the type.
+
+	> createInstanceDecl :: CTypeDecl -> InfoTree -> InstanceDecl
+	> createInstanceDecl (CType name _ tvars {- (tvar:tvars) -} conss) infoTree = 
+
+	The 1st type variable is `m` for the debug monad in functional representations
+	and requires a constraint for `DM`.
+	If furhter type vars are used in the data type, a class constraint ensuring
+	`GenTerm` is required for each type variable.
+	  
+	>   (Instance (map gtConstraint tvars {- ((dmConstraint tvar):(map gtConstraint tvars)) -})
+	>             (TypeClass staticInfoClass [CTCons name (map CTVar tvars {- (tvar:tvars) -})]) 
+	>             funcs)
+	>   where
+	>     dmConstraint = constraint debugMonadClass
+	>     gtConstraint = constraint staticInfoClass
+
+	  The list of declared functions contains a generator for not evaluated expressions, `genTerm` for the additional constructor (<Type>Underscore) and all declared constructors:
+
+	>     funcs = (createUnderscore name):
+	>             (createGenTermUnderscore name infoTree):
+	>             (zipWith createGenTerm filteredConss consTrees) ++
+	>             [createCallToGenericTerm name infoTree]
+
+	>     filteredConss = filterUnderscore conss
+
+	  Extract the info trees of the constructors:
+
+	>     consTrees = infoChildren $ snd $ nextStaticInfo infoTree
+
+	WORKAROUND
+
+	> filterUnderscore [] = []
+	> filterUnderscore (c@(CCons (_,name) _ _ _):cs) =
+	>   if isSuffixOf underscoreSuffix name ||
+	>      isSuffixOf orSuffix name ||
+	>      isSuffixOf failSuffix name then cs' else c:cs'
+	>     where cs' = filterUnderscore cs
+	>           isSuffixOf xs ys = isPrefixOf (reverse xs) (reverse ys)
+
+	Creates an instance function for `GenTerm` for the given constructor.
+	The created function matches left-side the constructor's arguments in patterns
+	and constructs a `Term` containing the term representation of those arguments.
+	The term includes a source reference extracted from the `InfoTree`.
+
+
+	What is this? One function declaration for each constructor? 
+	This should be one rule per, rather.
+
+	> createGenTerm :: CConsDecl -> InfoTree -> HFuncDecl
+	> createGenTerm (CCons qn@(mod,name) arity _ _) infoTree =
+	>   (HFunc staticInfoFunc 1 AC.Public [] untyped (rules [rule])) where
+	>     rule   = simpleRule [pat] $ comb staticInfoCons
+	>                                      [acyStr name,
+	>                                       createStaticInfo mod srcRef,
+	>                                       args]
+	>     args   = list $ (map genTermCallVar [1..arity])
+	>     srcRef = fst (nextStaticInfo infoTree)
+
+	  Pattern to match the constructor:
+
+	>     pat    = (CPComb qn (map px [1..arity]))
+
+	Creates the generator for not evaluated expressions of data type with given name.
+
+	> createUnderscore :: AC.QName -> HFuncDecl
+	> createUnderscore qn =
+	>   (HFunc underscoreMethod 1 AC.Public [] untyped (rules [rule])) where
+	>     rule = constantRule $ CSymbol (mod,name++underscoreSuffix)
+	>     (mod,name) = renameType qn
+
+	> createCallToGenericTerm :: AC.QName -> InfoTree -> HFuncDecl
+	> createCallToGenericTerm qn infoTree =
+	>   (HFunc staticInfoFunc 1 AC.Public [] untyped (rules [rule])) where
+	>     rule   = simpleRule [pat] $ comb genericInfoFunc
+	>                                      [createStaticInfo mod srcRef,xx 1]
+	>     srcRef = fst (nextStaticInfo infoTree)
+	>     pat    = px 1
+	>     (mod,name) = renameType qn
+
+
+	> createGenTermUnderscore :: AC.QName -> InfoTree -> HFuncDecl
+	> createGenTermUnderscore qn infoTree =
+	>   (HFunc staticInfoFunc 1 AC.Public [] untyped (rules [rule])) where
+	>     rule   = simpleRule [pat] $ comb underscoreCons
+	>                                      [createStaticInfo mod srcRef]
+	>     srcRef = fst (nextStaticInfo infoTree)
+
+	  Pattern to match the constructor for not evaluated expressions:
+
+	>     pat    = (CPComb (mod,name++underscoreSuffix) [])
+	>     (mod,name) = renameType qn
+
+
+	Creates instance for Typeable.
+
+	> createTypeableInstance :: CTypeDecl -> InstanceDecl
+	> createTypeableInstance (CType name _ tvars _) = 
+	>   (Instance (map (constraint dataClass) tvars)
+	>             (TypeClass typeableClass [CTCons name (map CTVar tvars)]) 
+	>             [])
+
+	Creates instance for Data.
+
+	> createDataInstance :: CTypeDecl -> InstanceDecl
+	> createDataInstance (CType name _ tvars _) = 
+	>   (Instance (map (constraint dataClass) tvars)
+	>             (TypeClass dataClass [CTCons name (map CTVar tvars)]) 
+	>             [])
+

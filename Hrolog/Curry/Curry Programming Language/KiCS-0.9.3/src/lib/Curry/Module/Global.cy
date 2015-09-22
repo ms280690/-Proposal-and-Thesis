@@ -1,0 +1,16 @@
+Module "Global"
+(Just (Exporting (26,14) [(Export (QualIdent Nothing (Ident "Global" 0))),(ExportTypeAll (QualIdent Nothing (Ident "GlobalSpec" 0))),(Export (QualIdent Nothing (Ident "global" 0))),(Export (QualIdent Nothing (Ident "readGlobal" 0))),(Export (QualIdent Nothing (Ident "writeGlobal" 0)))]))
+[(ImportDecl (1,1) "Prelude" False Nothing Nothing)
+,(DataDecl (31,1) (Ident "Global" 0) [(Ident "a" 0)] [])
+,(DataDecl (43,1) (Ident "GlobalSpec" 0) [] [(ConstrDecl (43,19) [] (Ident "Temporary" 0) []),(ConstrDecl (43,32) [] (Ident "Persistent" 0) [(ConstructorType (QualIdent Nothing (Ident "String" 0)) [])])])
+,(TypeSig (35,1) [(Ident "global" 0)] (ArrowType (VariableType (Ident "a" 0)) (ArrowType (ConstructorType (QualIdent Nothing (Ident "GlobalSpec" 0)) []) (ConstructorType (QualIdent Nothing (Ident "Global" 0)) [(VariableType (Ident "a" 0))]))))
+,(FlatExternalDecl (36,1) [(Ident "global" 0)])
+,(TypeSig (47,1) [(Ident "readGlobal" 0)] (ArrowType (ConstructorType (QualIdent Nothing (Ident "Global" 0)) [(VariableType (Ident "a" 0))]) (ConstructorType (QualIdent Nothing (Ident "IO" 0)) [(VariableType (Ident "a" 0))])))
+,(FunctionDecl (48,1) (Ident "readGlobal" 0) [(Equation (48,1) (FunLhs (Ident "readGlobal" 0) [(VariablePattern (Ident "g" 2))]) (SimpleRhs (48,16) (InfixApply (Variable (QualIdent (Just "Global") (Ident "prim_readGlobal" 0))) (InfixOp (QualIdent (Just "Prelude") (Ident "$#" 0))) (Variable (QualIdent Nothing (Ident "g" 2)))) []))])
+,(TypeSig (50,1) [(Ident "prim_readGlobal" 0)] (ArrowType (ConstructorType (QualIdent Nothing (Ident "Global" 0)) [(VariableType (Ident "a" 0))]) (ConstructorType (QualIdent Nothing (Ident "IO" 0)) [(VariableType (Ident "a" 0))])))
+,(FlatExternalDecl (51,1) [(Ident "prim_readGlobal" 0)])
+,(TypeSig (56,1) [(Ident "writeGlobal" 0)] (ArrowType (ConstructorType (QualIdent Nothing (Ident "Global" 0)) [(VariableType (Ident "a" 0))]) (ArrowType (VariableType (Ident "a" 0)) (ConstructorType (QualIdent Nothing (Ident "IO" 0)) [(TupleType [])]))))
+,(FunctionDecl (57,1) (Ident "writeGlobal" 0) [(Equation (57,1) (FunLhs (Ident "writeGlobal" 0) [(VariablePattern (Ident "g" 4)),(VariablePattern (Ident "v" 4))]) (SimpleRhs (57,19) (InfixApply (Paren (InfixApply (Variable (QualIdent (Just "Global") (Ident "prim_writeGlobal" 0))) (InfixOp (QualIdent (Just "Prelude") (Ident "$#" 0))) (Variable (QualIdent Nothing (Ident "g" 4))))) (InfixOp (QualIdent (Just "Prelude") (Ident "$##" 0))) (Variable (QualIdent Nothing (Ident "v" 4)))) []))])
+,(TypeSig (59,1) [(Ident "prim_writeGlobal" 0)] (ArrowType (ConstructorType (QualIdent Nothing (Ident "Global" 0)) [(VariableType (Ident "a" 0))]) (ArrowType (VariableType (Ident "a" 0)) (ConstructorType (QualIdent Nothing (Ident "IO" 0)) [(TupleType [])]))))
+,(FlatExternalDecl (60,1) [(Ident "prim_writeGlobal" 0)])
+]

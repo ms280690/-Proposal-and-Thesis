@@ -1,0 +1,150 @@
+Libraries for Prolog in Haskell
+
+
+----------------------------------------------------------------------------------------------------------
+
+
+Interpreters ==>
+
+
+prolog (library) : A Prolog interpreter written in Haskell.
+
+
+
+NanoProlog (library and program) : Very small interpreter for a Prolog-like language.
+
+
+
+lojysamban (program) : Prolog with lojban
+
+
+
+----------------------------------------------------------------------------------------------------------
+
+
+Backtracking, like debug / trace function in prolog ==>
+
+
+
+prolog-graph (program) : A command line tool to visualize query resolution in Prolog.
+
+
+
+prolog-graph-lib (library) : Generating images of resolution trees for Prolog queries. 
+
+
+
+----------------------------------------------------------------------------------------------------------
+
+
+Concatenaive Programming ==>
+
+peg (program) : a lazy non-deterministic concatenative programming language.
+
+
+
+----------------------------------------------------------------------------------------------------------
+
+
+Unification ==>
+
+
+unification-fd (library) : Simple generic unification algorithms.
+
+
+
+cmu (library and program) : Unification in a Commutative Monoid.
+
+
+
+agum (library and program) :  Unification and Matching in an Abelian Group.
+
+
+
+tamarin-prover-term (library and program) : uses maude (http://maude.cs.uiuc.edu/) as a backend for normalization, equational matching, and unification.
+
+
+------------------------------------------------------------------------------------------------------
+
+
+
+Implementaions ==>
+
+
+
+Takashi workplace : http://propella.blogspot.ca/2009/04/prolog-in-haskell.html
+		    
+Does have the cut, fail operator, still lazy, no dynamic typing.
+
+
+
+Hugs98 Prolog : http://darcs.haskell.org/hugs98/demos/prolog/
+		
+Mini Prolog
+		
+two engines, 
+		
+Pure engine --> lazy evaluation, 
+stack engine --> backtracking, cut
+		No fail operator, still lazy, no dynamic typing.
+
+
+
+----------------------------------------------------------------------------------------------------------
+
+
+
+Papers / Publications ==>
+
+
+Embedding Prolog in Haskell : http://www.cs.uu.nl/research/techreps/UU-CS-1999-28.html		
+			  
+----------------------------------------------------------------------------------------------------------
+
+
+Citations ==>
+
+
+
+Monadic constraint programming, Wadler
+
+
+
+	
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------
+Functional Logic Programming
+
+Lambda Prolog
+
+Mercury
+
+Curry
+
+Escher
+----------------------------------------------------------------------------------------------------------------
+
+Lambda the ultimate
+
+Embedding one language into another
+----------------------------------------------------------------------------------------------------------------
+
+
+Typed Logical Variables in Haskell
+
+Typed Functional Logic Programming Language in Haskell
+
+----------------------------------------------------------------------------------------------------------------
+
+Libraries related to Logic in Haskell
+
+logict library: Continuation Based Backtracking Logic Programming Monad from  http://okmij.org/ftp/papers/LogicT.pdf. 
+
+
+
+
+

@@ -1,0 +1,29 @@
+\contentsline {section}{Floating Point Parser}{3}
+\contentsline {subsection}{Phase 1 : Problems, Librabries and Minimalistic Examples}{3}
+\contentsline {paragraph}{}{3}
+\contentsline {paragraph}{}{3}
+\contentsline {paragraph}{}{3}
+\contentsline {paragraph}{}{3}
+\contentsline {paragraph}{}{4}
+\contentsline {paragraph}{}{4}
+\contentsline {paragraph}{}{4}
+\contentsline {paragraph}{}{4}
+\contentsline {paragraph}{}{5}
+\contentsline {paragraph}{}{5}
+\contentsline {paragraph}{}{6}
+\contentsline {paragraph}{}{7}
+\contentsline {subsection}{Phase 2 : Moving towards a partial solution}{8}
+\contentsline {paragraph}{}{8}
+\contentsline {paragraph}{}{9}
+\contentsline {paragraph}{}{9}
+\contentsline {paragraph}{}{10}
+\contentsline {paragraph}{}{24}
+\contentsline {section}{Unification Monad}{25}
+\contentsline {section}{Narrowing in Curry}{26}
+\contentsline {subsection}{Rewriting}{26}
+\contentsline {subsection}{Narrowing}{27}
+\contentsline {subsection}{Curry}{29}
+\contentsline {section}{david-0.2.0.1}{30}
+\contentsline {section}{Tutorial}{31}
+\contentsline {paragraph}{}{31}
+\contentsline {section}{Problem 6}{32}

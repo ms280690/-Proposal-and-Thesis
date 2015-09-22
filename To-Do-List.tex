@@ -1,0 +1,128 @@
+\documentclass[11pt]{article}
+
+\usepackage{wasysym}     
+\usepackage{hyperref}
+
+\setlength{\marginparwidth}{1.2in}
+\let\oldmarginpar\marginpar
+\renewcommand\marginpar[1]{\-\oldmarginpar[\raggedleft #1]%
+{\raggedright #1}}    
+
+\newenvironment{checklist}{%
+  \begin{list}{}{}% whatever you want the list to be
+  \let\olditem\item
+  \renewcommand\item{\olditem -- \marginpar{$\Box$} }
+  \newcommand\checkeditem{\olditem -- \marginpar{$\CheckedBox$} }
+}{%
+  \end{list}
+}   
+
+\begin{document}
+\begin{titlepage}
+   \vspace*{\stretch{1.0}}
+   \begin{center}
+      \huge\textbf{The Thesis To-Do-List}\\
+      \Large\textit{Mehul C. Solanki} \\
+      \date{\today} 
+      \large\texttt{solanki@unbc.ca} \\
+   \end{center}
+   \vspace*{\stretch{2.0}}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+\section{\textsc{Prolog} Grammar}
+\begin{checklist}
+  \checkeditem   Play around with and understand the parser and syntax of \textbf{prolog-0.2.0.1} library. 
+  
+  \checkeditem  Add floating point support. 
+  
+  \item   Study  syntax and grammar from 
+ \href{http://sicstus.sics.se/sicstus/docs/3.7.1/html/sicstus_45.html}{\textsc{Sicstus Prolog}}
+ and incorporate it into the parser above.
+ 
+ \item Incorporate those tricky \textsc{Prolog} terms with single quotes along with  support for ASCII codes
+ 
+ \item Go through Dr. Casperson's code for syntax, parser, print and quasi quoting.
+ 
+ \item Add arithmetic support during parsing that is, if an atom is of the form,
+ \\* 3 + 4 + 5
+ \\* after parsing should be 
+ \\* 12.
+ 
+ \item  Other \textsc{Prolog} syntax such as equality expressions,
+ \\* =(X,Y). or
+ \\* =(1,1). or
+ \\* =('a','b').
+ 
+ \item The parser from the library parses grammars (CFG, DCG) but I do not know how well but everything works well. Moreover, there is no 
+ special syntax support for recognising clauses of the grammar form.  
+  
+ \item Do something about quasi quotation and learn more about template \textsc{Haskell}.
+ 
+ \item Look at \textbf{hswip} and \textbf{Nanoprolog} for anything new.
+ 
+ \item Try and implement a small working example like \textit{append} which was mentioned in one of the papers. 
+\end{checklist}
+
+\section{Unification}
+\begin{checklist}
+\item Look at unification in \textsc{prolog-0.2.0.1}.
+
+\item Look at unification-fd.
+
+\item Look at monad-unify.
+
+ \item Read about \textsc{Curry} and how they do residuation and narrowing in their most natural form, because the evaluation works just 
+ like \textsc{Haskell} when the variables are confined to the left that is when the matching has to be done just one way.
+ 
+ \item Look at the \textbf{Hugs98} for implementing variable search strategies. What is this "Andorra Engine" ?
+
+\item Look at an unofficial implementaion at TAKASHI'S Workplace.
+
+\item A new library called \textbf{compdata} which is based on 
+\href{http://www.diku.dk/~paba/pubs/files/bahr11wgp-paper.pdf}{Compositional} 
+\href{http://www.diku.dk/~paba/pubs/files/bahr11wgp-paper.pdf}{Data Types} and unifies terms using the 
+ \href{http://www.nsl.com/misc/papers/martelli-montanari.pdf}{"Martelli and Montanari" Unification algorithm}.
+
+\item If nothing else happens, try and implement the algorithm from above.
+
+\end{checklist}
+
+\section{IO and other practical features}
+\begin{checklist}
+\item Cut, how the hell does it work ?
+
+\item Fail, how the hell does it work ?
+
+\item Assert, how the hell does it work ?
+
+\item SetOf, BagOf, how the hell does it work ?
+
+\item consult , how the hell does it work ?
+
+\item IO operations like reading a file, how the hell does it work ?
+\end{checklist}
+
+\section{Publications}
+\begin{description}
+\item[$\bullet$] Will functional programming take over the world?
+\\* This paper ha by far the most content mostly thoughts and speculations based on experiences in Haskell collected from programming, 
+reading and other sources. I feel this will be the last in terms of completion.  
+
+Content is been added every day but the pace is slow.
+
+\item[$\bullet$] Prolog in Haskell : A Survey.
+\\* Now this is the one which is expected to be finished very soon even though it does not have much content in it.
+
+Content is been added every week but the pace is very slow.
+
+\item[$\bullet$] Prolog in Haskell : Reloaded.
+\\* Probably after the work is near completed.
+
+Content is been added once every ......  and the pace is very very slow.
+
+\end{description}
+
+\end{document}

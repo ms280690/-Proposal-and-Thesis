@@ -1,0 +1,47 @@
+*** /Users/casper/Desktop/à voir/ut.d/tutorial1.hs	Wed Dec 10 19:23:20 2014
+--- /Users/casper/Code/haskell/Unification-Tutorial/tutorial1.hs	Wed Dec 10 19:14:26 2014
+***************
+*** 41,49 ****
+              T n <$> pairWith (\l r -> Right(l,r)) ls rs
+  
+  ----------------------------------------------------------------
+  -- Some aliases for simplifying type signatures:
+! type PrologTerm           = UTerm T IntVar 
+  type PrologFailure        = UnificationFailure T IntVar
+  type PrologBindingState   = IntBindingState T
+  type FallibleBindingMonad = ErrorT PrologFailure (IntBindingT T Identity)
+  type PrologMonad          = ErrorT PrologFailure (IntBindingT T Logic)
+--- 41,49 ----
+              T n <$> pairWith (\l r -> Right(l,r)) ls rs
+  
+  ----------------------------------------------------------------
+  -- Some aliases for simplifying type signatures:
+! type PrologTerm           = UTerm T IntVar
+  type PrologFailure        = UnificationFailure T IntVar
+  type PrologBindingState   = IntBindingState T
+  type FallibleBindingMonad = ErrorT PrologFailure (IntBindingT T Identity)
+  type PrologMonad          = ErrorT PrologFailure (IntBindingT T Logic)
+***************
+*** 92,99 ****
+--- 92,102 ----
+  -- TODO: redefine UnificationFailure to deal with all that crap...
+  -- example4 :: PrologTerm -> Example
+  example4 x = (x =:= bar) <|> (x =:= atom "other")
+  
++ backtrackingTest
++     :: (Applicative m, Monad m)
++     => ErrorT PrologFailure (IntBindingT T m) PrologTerm
+  backtrackingTest = do
+      x <- getFreeVar
+      y <- getFreeVar
+      (x =:= y >> failure) <|> return (foo x y)
+***************
+*** 128,131 ****
+--- 131,137 ----
+  observeMaybe mx = runLogic mx (\a _ -> Just a) Nothing
+  
+  ----------------------------------------------------------------
+  ----------------------------------------------------------- fin.
++ 
++ main:: IO ()
++ main = undefined

@@ -1,0 +1,24 @@
+{- Auto generated stubs for external functions and types
+   Remove this comment to suppress warnings. -}
+module Curry.DebugModule.Time where
+ 
+strict_getClockTime ::
+                    (DM.DM dm) => dm (Curry.DebugModule.Prelude.IO dm ClockTime)
+strict_getClockTime
+  = hook_strict_getClockTime (Prelude.error "not implemented")
+ 
+strict_prim_toCalendarTime ::
+                           (DM.DM dm) =>
+                             ClockTime -> dm (Curry.DebugModule.Prelude.IO dm CalendarTime)
+strict_prim_toCalendarTime x0
+  = hook_strict_prim_toCalendarTime x0
+      (Prelude.error "not implemented")
+ 
+strict_prim_toUTCTime :: (DM.DM dm) => ClockTime -> dm CalendarTime
+strict_prim_toUTCTime x0
+  = hook_strict_prim_toUTCTime x0 (Prelude.error "not implemented")
+ 
+strict_prim_toClockTime ::
+                        (DM.DM dm) => CalendarTime -> dm ClockTime
+strict_prim_toClockTime x0
+  = hook_strict_prim_toClockTime x0 (Prelude.error "not implemented")

@@ -1,0 +1,1 @@
+Prog "Trace" ["Prelude"] [] [Func ("Trace","trace") 1 Public (FuncType (TVar 0) (TVar 0)) (Rule [] (Var 0))] []

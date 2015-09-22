@@ -1,0 +1,110 @@
+{- Auto generated stubs for external functions and types
+   Remove this comment to suppress warnings. -}
+module Curry.DebugModule.Directory where
+ 
+strict_prim_doesFileExist ::
+                          (DM.DM dm) =>
+                            Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                              dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Bool)
+strict_prim_doesFileExist x0
+  = hook_strict_prim_doesFileExist x0
+      (Prelude.error "not implemented")
+ 
+strict_prim_doesDirectoryExist ::
+                               (DM.DM dm) =>
+                                 Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                                   dm
+                                     (Curry.DebugModule.Prelude.IO dm
+                                        Curry.DebugModule.Prelude.Bool)
+strict_prim_doesDirectoryExist x0
+  = hook_strict_prim_doesDirectoryExist x0
+      (Prelude.error "not implemented")
+ 
+strict_prim_fileSize ::
+                     (DM.DM dm) =>
+                       Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                         dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Int)
+strict_prim_fileSize x0
+  = hook_strict_prim_fileSize x0 (Prelude.error "not implemented")
+ 
+strict_prim_getModificationTime ::
+                                (DM.DM dm) =>
+                                  Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                                    dm
+                                      (Curry.DebugModule.Prelude.IO dm
+                                         Curry.DebugModule.Time.ClockTime)
+strict_prim_getModificationTime x0
+  = hook_strict_prim_getModificationTime x0
+      (Prelude.error "not implemented")
+ 
+strict_getCurrentDirectory ::
+                           (DM.DM dm) =>
+                             dm
+                               (Curry.DebugModule.Prelude.IO dm
+                                  (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char))
+strict_getCurrentDirectory
+  = hook_strict_getCurrentDirectory (Prelude.error "not implemented")
+ 
+strict_prim_setCurrentDirectory ::
+                                (DM.DM dm) =>
+                                  Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                                    dm
+                                      (Curry.DebugModule.Prelude.IO dm
+                                         Curry.DebugModule.Prelude.Unit)
+strict_prim_setCurrentDirectory x0
+  = hook_strict_prim_setCurrentDirectory x0
+      (Prelude.error "not implemented")
+ 
+strict_prim_getDirectoryContents ::
+                                 (DM.DM dm) =>
+                                   Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                                     dm
+                                       (Curry.DebugModule.Prelude.IO dm
+                                          (Curry.DebugModule.Prelude.List
+                                             (Curry.DebugModule.Prelude.List
+                                                Curry.DebugModule.Prelude.Char)))
+strict_prim_getDirectoryContents x0
+  = hook_strict_prim_getDirectoryContents x0
+      (Prelude.error "not implemented")
+ 
+strict_prim_createDirectory ::
+                            (DM.DM dm) =>
+                              Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                                dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_prim_createDirectory x0
+  = hook_strict_prim_createDirectory x0
+      (Prelude.error "not implemented")
+ 
+strict_prim_removeFile ::
+                       (DM.DM dm) =>
+                         Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                           dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_prim_removeFile x0
+  = hook_strict_prim_removeFile x0 (Prelude.error "not implemented")
+ 
+strict_prim_removeDirectory ::
+                            (DM.DM dm) =>
+                              Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                                dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_prim_removeDirectory x0
+  = hook_strict_prim_removeDirectory x0
+      (Prelude.error "not implemented")
+ 
+strict_prim_renameFile ::
+                       (DM.DM dm) =>
+                         Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                           Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                             dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_prim_renameFile x0 x1
+  = hook_strict_prim_renameFile x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_prim_renameDirectory ::
+                            (DM.DM dm) =>
+                              Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                                Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                                  dm
+                                    (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_prim_renameDirectory x0 x1
+  = hook_strict_prim_renameDirectory x0 x1
+      (Prelude.error "not implemented")

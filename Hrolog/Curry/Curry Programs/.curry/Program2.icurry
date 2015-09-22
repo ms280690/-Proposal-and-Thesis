@@ -1,0 +1,5 @@
+interface Program2 where {
+import Prelude;
+hiding data Prelude.Success;
+my_append 3 :: [a] -> [a] -> [a] -> Prelude.Success
+}

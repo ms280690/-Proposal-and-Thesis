@@ -1,0 +1,1 @@
+Prog "Program2" ["Prelude"] [] [Func ("Program2","my_append") 3 Public (FuncType (TCons ("Prelude","[]") [TVar 0]) (FuncType (TCons ("Prelude","[]") [TVar 0]) (FuncType (TCons ("Prelude","[]") [TVar 0]) (TCons ("Prelude","Success") [])))) (Rule [] (Var 0))] []

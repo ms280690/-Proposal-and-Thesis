@@ -1,0 +1,23 @@
+[ForFunction "prim_showTerm"
+,ForFunction "prim_showQTerm"
+,ForFunction "prim_readsUnqualifiedTerm"
+,ForFunction "prim_readsQTerm"
+]
+
+import Data.Char
+
+prim_showTerm :: Curry t0 => t0 -> Result (List C_Char)
+prim_showTerm = prim_show 
+
+--because of type classes there is no need to qualify in kics
+prim_showQTerm :: Curry t0 => t0 -> Result (List C_Char)
+prim_showQTerm x _ = toCurry (showQ 0 x [])
+
+prim_readsUnqualifiedTerm :: Curry t0 => 
+   List C_String -> C_String -> Result (List (T2 t0 C_String))
+prim_readsUnqualifiedTerm _ x _ = 
+  fromHaskellList $ map (\ (x,y) -> T2 x (toCurry y)) $ reads $ fromCurry x
+
+prim_readsQTerm :: Curry t0 => C_String -> Result (List (T2 t0 C_String))
+prim_readsQTerm = prim_readsUnqualifiedTerm List  
+

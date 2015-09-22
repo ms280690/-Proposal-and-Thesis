@@ -1,0 +1,1476 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Programming/Coding Assignment
+% LaTeX Template
+%
+% This template has been downloaded from:
+% http://www.latextemplates.com
+%
+% Original author:
+% Ted Pavlic (http://www.tedpavlic.com)
+%
+% Note:
+% The \lipsum[#] commands throughout this template generate dummy text
+% to fill the template out. These commands should all be removed when 
+% writing assignment content.
+%
+% This template uses a Perl script as an example snippet of code, most other
+% languages are also usable. Configure them in the "CODE INCLUSION 
+% CONFIGURATION" section.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[12pt]{article}
+\newcommand\TestAppExists[3]{#2}
+\usepackage{fancyhdr} % Required for custom headers
+\usepackage{lastpage} % Required to determine the last page for the footer
+\usepackage{extramarks} % Required for headers and footers
+\usepackage[usenames,dvipsnames]{color} % Required for custom colors
+\usepackage{graphicx} % Required to insert images
+\usepackage{listings} % Required for insertion of code
+\usepackage{courier} % Required for the courier font
+\usepackage{color}
+%\usepackage{lipsum} % Used for inserting dummy 'Lorem ipsum' text into the template
+\usepackage{minted}
+\usepackage{tcolorbox}
+\usepackage{etoolbox}
+%\BeforeBeginEnvironment{minted}{\begin{tcolorbox}}%
+%\AfterEndEnvironment{minted}{\end{tcolorbox}}%
+%\usepackage[colorlinks]{hyperref}
+%\usepackage[colorinlistoftodos]{todonotes}
+%\usepackage{verbatim}
+
+
+% Margins
+\topmargin=-0.45in
+\evensidemargin=0in
+\oddsidemargin=0in
+\textwidth=6.5in
+\textheight=9.0in
+\headsep=0.25in
+
+\linespread{1.1} % Line spacing
+
+% Set up the header and footer
+\pagestyle{fancy}
+\lhead{\hmwkAuthorName} % Top left header
+ \chead{\hmwkTitle} % Top center head
+\rhead{\firstxmark} % Top right header
+\lfoot{\lastxmark} % Bottom left footer
+\cfoot{} % Bottom center footer
+\rfoot{Page\ \thepage\ of\ \protect\pageref{LastPage}} % Bottom right footer
+\renewcommand\headrulewidth{0.4pt} % Size of the header rule
+\renewcommand\footrulewidth{0.4pt} % Size of the footer rule
+
+\setlength\parindent{0pt} % Removes all indentation from paragraphs
+
+%----------------------------------------------------------------------------------------
+%	CODE INCLUSION CONFIGURATION
+%----------------------------------------------------------------------------------------
+
+\definecolor{MyDarkGreen}{rgb}{0.0,0.4,0.0} % This is the color used for comments
+\lstloadlanguages{Perl} % Load Perl syntax for listings, for a list of other languages supported see: ftp://ftp.tex.ac.uk/tex-archive/macros/latex/contrib/listings/listings.pdf
+\lstset{language=Perl, % Use Perl in this example
+        frame=single, % Single frame around code
+        basicstyle=\small\ttfamily, % Use small true type font
+        keywordstyle=[1]\color{Blue}\bf, % Perl functions bold and blue
+        keywordstyle=[2]\color{Purple}, % Perl function arguments purple
+        keywordstyle=[3]\color{Blue}\underbar, % Custom functions underlined and blue
+        identifierstyle=, % Nothing special about identifiers                                         
+        commentstyle=\usefont{T1}{pcr}{m}{sl}\color{MyDarkGreen}\small, % Comments small dark green courier font
+        stringstyle=\color{Purple}, % Strings are purple
+        showstringspaces=false, % Don't put marks in string spaces
+        tabsize=5, % 5 spaces per tab
+        %
+        % Put standard Perl functions not included in the default language here
+        morekeywords={rand},
+        %
+        % Put Perl function parameters here
+        morekeywords=[2]{on, off, interp},
+        %
+        % Put user defined functions here
+        morekeywords=[3]{test},
+       	%
+        morecomment=[l][\color{Blue}]{...}, % Line continuation (...) like blue comment
+        numbers=left, % Line numbers on left
+        firstnumber=1, % Line numbers start with line 1
+        numberstyle=\tiny\color{Blue}, % Line numbers are blue and small
+        stepnumber=5 % Line numbers go in steps of 5
+}
+
+% Creates a new command to include a perl script, the first parameter is the filename of the script (without .pl), the second parameter is the caption
+\newcommand{\perlscript}[2]{
+\begin{itemize}
+\item[]\lstinputlisting[caption=#2,label=#1]{#1.pl}
+\end{itemize}
+}
+
+%--------------------------Haskell Syntax Highlighting-------------------------------------
+
+
+\lstloadlanguages{Haskell}
+
+\lstnewenvironment{code}
+    {\lstset{}%
+      \csname lst@SetFirstLabel\endcsname}
+    {\csname lst@SaveFirstLabel\endcsname}
+    \lstset{
+      basicstyle=\small\ttfamily,
+      flexiblecolumns=false,
+      basewidth={0.5em,0.45em},
+      literate={+}{{$+$}}1 {/}{{$/$}}1 {*}{{$*$}}1 {=}{{$=$}}1
+               {>}{{$>$}}1 {<}{{$<$}}1 {\\}{{$\lambda$}}1
+               {\\\\}{{\char`\\\char`\\}}1
+               {->}{{$\rightarrow$}}2 {>=}{{$\geq$}}2 {<-}{{$\leftarrow$}}2
+               {<=}{{$\leq$}}2 {=>}{{$\Rightarrow$}}2 
+               {\ .}{{$\circ$}}2 {\ .\ }{{$\circ$}}2
+               {>>}{{>>}}2 {>>=}{{>>=}}2
+               {|}{{$\mid$}}1               
+    }
+
+\newcommand{\haskellscript}[2]{
+\begin{itemize}
+\item[]\lstinputlisting[caption=#2,label=#1]{#1.hs}
+\end{itemize}
+}
+
+
+%----------------------------------------------------------------------------------------
+%	DOCUMENT STRUCTURE COMMANDS
+%	Skip this unless you know what you're doing
+%----------------------------------------------------------------------------------------
+
+% Header and footer for when a page split occurs within a problem environment
+\newcommand{\enterProblemHeader}[1]{
+\nobreak\extramarks{#1}{#1 continued on next page\ldots}\nobreak
+\nobreak\extramarks{#1 (continued)}{#1 continued on next page\ldots}\nobreak
+}
+
+% Header and footer for when a page split occurs between problem environments
+\newcommand{\exitProblemHeader}[1]{
+\nobreak\extramarks{#1 (continued)}{#1 continued on next page\ldots}\nobreak
+\nobreak\extramarks{#1}{}\nobreak
+}
+
+\setcounter{secnumdepth}{0} % Removes default section numbers
+\newcounter{homeworkProblemCounter} % Creates a counter to keep track of the number of problems
+
+\newcommand{\homeworkProblemName}{}
+\newenvironment{homeworkProblem}[1][Problem \arabic{homeworkProblemCounter}]{ % Makes a new environment called homeworkProblem which takes 1 argument (custom name) but the default is "Problem #"
+\stepcounter{homeworkProblemCounter} % Increase counter for number of problems
+\renewcommand{\homeworkProblemName}{#1} % Assign \homeworkProblemName the name of the problem
+\section{\homeworkProblemName} % Make a section in the document with the custom problem count
+\enterProblemHeader{\homeworkProblemName} % Header and footer within the environment
+}{
+\exitProblemHeader{\homeworkProblemName} % Header and footer after the environment
+}
+
+\newcommand{\problemAnswer}[1]{ % Defines the problem answer command with the content as the only argument
+\noindent\framebox[\columnwidth][c]{\begin{minipage}{0.98\columnwidth}#1\end{minipage}} % Makes the box around the problem answer and puts the content inside
+}
+
+\newcommand{\homeworkSectionName}{}
+\newenvironment{homeworkSection}[1]{ % New environment for sections within homework problems, takes 1 argument - the name of the section
+\renewcommand{\homeworkSectionName}{#1} % Assign \homeworkSectionName to the name of the section from the environment argument
+\subsection{\homeworkSectionName} % Make a subsection with the custom name of the subsection
+\enterProblemHeader{\homeworkProblemName\ [\homeworkSectionName]} % Header and footer within the environment
+}{
+\enterProblemHeader{\homeworkProblemName} % Header and footer after the environment
+}
+
+%----------------------------------------------------------------------------------------
+%	NAME AND CLASS SECTION
+%----------------------------------------------------------------------------------------
+
+\newcommand{\hmwkTitle}{Parser} % Assignment title
+\newcommand{\hmwkDueDate}{Monday,\ May\ 19,\ 2014} % Due date
+\newcommand{\hmwkClass}{Thesis Implementation} % Course/class
+\newcommand{\hmwkClassTime}{13:30} % Class/lecture time
+\newcommand{\hmwkClassInstructor}{Dr. David Casperson} % Teacher/lecturer
+\newcommand{\hmwkAuthorName}{Mehul Solanki} % Your name
+\newcommand{\emailId}{\texttt{solanki@unbc.ca}}}
+\newcommand{\studentId}{230108015}
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title{
+\vspace{1.5in}
+\textmd{\textbf{\hmwkClass \ \\ Document 1 \\ \hmwkTitle}}\\
+\normalsize\vspace{0.1in}\small{Due\ on\ \hmwkDueDate}\\
+\vspace{0.1in}\large{\textit{\hmwkClassInstructor\ \hmwkClassTime}}
+\vspace{3in}
+}
+
+\author{\textbf{\hmwkAuthorName} \\ \emailId \\ \studentId}
+\date{Last modified on \today} % Insert date here if you want it to appear below your name
+
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+\maketitle
+
+
+%----------------------------------------------------------------------------------------
+%	TABLE OF CONTENTS
+%----------------------------------------------------------------------------------------
+
+%\setcounter{tocdepth}{1} % Uncomment this line if you don't want subsections listed in the ToC
+
+\newpage
+\tableofcontents
+\newpage
+\listoflisting
+\newpage
+%----------------------------------------------------------------------------------------
+%	PROBLEM 1
+%----------------------------------------------------------------------------------------
+
+% To have just one problem per page, simply put a \clearpage after each problem
+
+\begin{homeworkProblem}[Floating Point Parser]
+
+\subsection{Phase 1 : Problems, Librabries and Minimalistic Examples}
+
+\paragraph{}
+ The first issue is that the library \textbf{prolog-0.2.0.1} does not support floating point numbers. Hence, the requirement is for a simple 
+floating point parser which could use the available \textsc{Haskell} packages like \textbf{parsec} for it to fit into the existing 
+implementation from the library. 
+
+\paragraph{}
+This code has its roots in a tutorial from the company FP Complete which recently released a web based IDE for \textsc{Haskell}. As an 
+exercise this code parses signed floating point numbers.  The code will be described function by function.
+
+\paragraph{}
+Beginning with a few basic operators from the imported modules,
+\begin{enumerate}
+\item Control.Applicative
+\begin{description}
+\item[$\bullet$] (\textless \$\textgreater)   :- Represents an infix synonym for \textit{fmap}. \mint{haskell}|(<$>) :: Functor f => (a -> b) -> f a -> f b|
+
+\item[$\bullet$]  (\textless $\star$\textgreater),  Sequential application. \mint{haskell} |<*> :: f (a -> b) -> f a -> f b |	
+
+\item[$\bullet$] ( $\star$\textgreater), Same as the above but discarding the value of the first argument. \mint{haskell}|(*>) :: f a -> f b -> f b |
+
+\item[$\bullet$] (\textless $|$\textgreater) Binary Operator.\mint{haskell}?(<|>) :: f a -> f a -> f a?
+\end{description}
+
+\item Parsec
+\begin{description}
+\item[$\bullet$] Text.ParserCombinators.Parsec.Prim.\textbf{parseTest}, for testing / running parsers. 
+\begin{minted}{haskell} 
+parseTest :: (Stream s Identity t, Show a) => Parsec s () a 
+					-> s -> IO () 
+\end{minted}
+
+\item[$\bullet$] Text.Parsec.Combinator.\textbf{many1}, applying a parser one or more times.
+\mint{haskell}|many1 :: Stream s m t => ParsecT s u m a -> ParsecT s u m [a]|
+
+\item [$\bullet$] Text.ParserCombinators.Parsec.Char.\textbf{digit},  parsing a digit to a single character.\vspace{-1em} \mint{haskell}|digit :: Stream s m Char => ParsecT s u m Char|
+\end{description}
+\end{enumerate}
+
+\paragraph{}
+Some auxiliary functions for working with lists for appending lists and elements. 
+
+\begin{minted}{haskell}
+(<++>) :: Applicative f => f [a] -> f [a] -> f [a]
+(<++>) a b = (++) <$> a <*> b
+
+(<:>) :: Applicative f => f a -> f [a] -> f [a]
+(<:>) a b = (:) <$> a <*> b
+\end{minted}
+
+\paragraph{}
+Each function below parses a specific part of a floating point number, hence each function is a parser in itself. Beginning with parsing 
+numbers, the funcion used here is \textit{digit} along with \textit{many1} for parsing a number with multiple digits. 
+\begin{minted}{haskell}
+number :: ParsecT [Char] u Data.Functor.Identity.Identity [Char]
+number = many1 digit
+\end{minted}
+
+\paragraph{}
+To parse signed numbers the sign leading a number which can either be positive or negative needs to be parsed. In the \textit{plus} parser 
+the sign is discarded as \textit{+3} can be written as \textit{3}. But for the negative sign it must be appended to the number itself, hence \textit{\textless:\textgreater}is used.
+\begin{minted}{haskell}
+plus :: ParsecT [Char] u Data.Functor.Identity.Identity [Char]
+plus = char '+' *> number
+
+minus :: ParsecT [Char] u Data.Functor.Identity.Identity [Char]
+minus = char '-' <:> number
+\end{minted}
+
+\paragraph{}
+Putting the three parser together we get a function for parsing signed integers.
+\begin{minted}{haskell}
+integer :: ParsecT [Char] u Data.Functor.Identity.Identity [Char]
+integer = plus <|> minus <|> number
+\end{minted}
+
+\paragraph{}
+The parser for \textbf{prolog-0.2.0.1} treats numbers are strings but the example treats them as floats and hence some modifications are 
+needed in an attempt to fit the code for parsing floats to extend the library.  The original code in the example is,
+\begin{minted}{haskell}
+
+float :: Stream s m Char => ParsecT s u m Float
+float :: ParsecT [Char] u Data.Functor.Identity.Identity Float
+float =  fmap rd $ integer <++> decimal <++> exponent
+    where rd       = read :: String -> Float
+          decimal  = option "" $ char '.' <:> number
+          exponent = option "" $ oneOf "eE" <:> integer
+\end{minted}
+
+while the library parser for \textsc{Prolog} \textit{atoms} has the following type signature,
+\begin{minted}{haskell}
+atom :: ParsecT String u Identity [Char]
+\end{minted}
+The modification is not to read the number as a string, hence removing the use of \textit{rd} function.
+\begin{minted}{haskell}
+float :: ParsecT [Char] u Identity [Char]
+float = integer <++> decimal <++> exponent
+    where rd       = read :: String -> Float -- not used
+          decimal  = option "" $ char '.' <:> number
+          exponent = option "" $ oneOf "eE" <:> integer
+\end{minted}
+
+\paragraph{}
+Lastly putting it all together and testing out the parser using the function \textit{parseTest}.
+\begin{minted}{haskell}
+main :: IO ()          
+main = forever $ do putStrLn "Enter a float: "
+                    input <- getLine
+                    parseTest float input
+{--
+OUTPUT :-
+Enter a float: 
+-12.3
+"-12.3"
+--}                                       
+\end{minted}
+
+\paragraph{}
+The complete program with pragmas and imports is as follows,
+\begin{minted}[linenos=true]{haskell}
+{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE FlexibleContexts #-}
+
+module Experiment(float
+	)where
+
+-- Mehul Solanki.
+
+import Control.Monad
+import Text.Parsec
+import Control.Applicative hiding ((<|>))
+import Data.Functor.Identity
+import Text.Parsec.Prim
+
+(<++>) :: Applicative f => f [a] -> f [a] -> f [a]
+(<++>) a b = (++) <$> a <*> b
+
+(<:>) :: Applicative f => f a -> f [a] -> f [a]
+(<:>) a b = (:) <$> a <*> b
+
+number :: ParsecT [Char] u Data.Functor.Identity.Identity [Char]
+number = many1 digit
+
+plus :: ParsecT [Char] u Data.Functor.Identity.Identity [Char]
+plus = char '+' *> number
+
+minus :: ParsecT [Char] u Data.Functor.Identity.Identity [Char]
+minus = char '-' <:> number
+
+integer :: ParsecT [Char] u Data.Functor.Identity.Identity [Char]
+integer = plus <|> minus <|> number
+
+--float :: Stream s m Char => ParsecT s u m Float
+--float :: ParsecT [Char] u Data.Functor.Identity.Identity Float
+--float =  fmap rd $ integer <++> decimal <++> exponent
+--    where rd       = read :: String -> Float
+--          decimal  = option "" $ char '.' <:> number
+--          exponent = option "" $ oneOf "eE" <:> integer
+
+float :: ParsecT [Char] u Identity [Char]
+float = integer <++> decimal <++> exponent
+    where rd       = read :: String -> Float
+          decimal  = option "" $ char '.' <:> number
+          exponent = option "" $ oneOf "eE" <:> integer
+
+main :: IO ()          
+main = forever $ do putStrLn "Enter a float: "
+                    input <- getLine
+                    parseTest float input
+
+\end{minted}
+
+\paragraph{}
+The shortcomings of the above program are the type mismatch and floating point numbers starting with a decimal point throw an error. To 
+solve the issue we need to look at other options. Either create some sort of support for the same or look into some other libraries. Turn out 
+that  there are a number of variations that have sprung out of \textbf{parsec} namely, \textbf{parsec-number}, \textbf{parsec1}, 
+\textbf{parsec2}, \textbf{parsec3}, \textbf{parsec-number} which give a variety of improvements over the parent. The intrest is in the 
+\textit{floating} parsers that the library provides.
+
+\mint{haskell}|floatParser x = Primitive.parseTest (Numbers.floating3 True) x |
+
+The above example uses the \textit{floating3} function, which accepts a \textit{boolean} value for puting a condition on whether or not there should be a number after the decimal dot. In the above \textit{3.} will throw an error. 
+
+\begin{minted}[linenos=true]{haskell}
+import Text.ParserCombinators.Parsec.Number as Numbers
+
+import Text.ParserCombinators.Parsec.Prim as Primitive
+
+floatParser :: [Char] -> IO ()
+floatParser x = Primitive.parseTest (Numbers.floating3 True) x 
+
+{--
+Output :-
+
+floatParser "12.3"
+12.3
+
+floatParser ".3"
+0.3
+
+floatParser "3."
+parse error at (line 1, column 3):
+unexpected end of input
+expecting fraction
+
+--}
+
+\end{minted}
+
+\paragraph{}
+But along with the ease of use comes a few other issues, namely the type incompatibilities and that signed numbers are not recognized.
+
+\begin{minted}{haskell}
+floatParser "+3.1"
+parse error at (line 1, column 1):
+unexpected "+"
+expecting fraction or digit
+\end{minted} 
+The way around this would be add something to recognise positive or negative signs just like the example code mentioned before. 
+
+\mint{haskell}|sign :: Num a => CharParser st (a -> a)|
+
+The function above parses an optional plus or minus sign, returning negate or id. The work for parsing signed numbers is in progress. Mean 
+while talking about the type mismatch, in the \textbf{prolog-0.2.0.1} the parsers have the following general type signature,
+
+\mint{haskell}|parser :: ParsecT s u m a|
+
+while the one in \textbf{parsec} has,
+
+\mint{haskell}|parser :: Floating f => CharParser st f|
+
+The easy solution to this issue is to look at the variations of the parent library. The \textbf{parsec3} and \textbf{parsec3-numbers} 
+libraries  gives us parsers with the following type signatures,
+
+\mint{haskell}|parser :: (Floating f, Stream s m Char) => ParsecT s u m f|
+
+which is very similar to the ones in the \textsc{Prolog} library. As with the parent library, \textbf{parsec3-number} provides 
+\textit{sign} function for dealing with positive or negative numbers. The only thing needed is to add this functionality tot the parser(They seem to have given how to use it in the hackage description but I am not able to get it).
+
+To recap,
+
+\begin{enumerate}
+\item \textbf{prolog-0.2.0.1} does not support floating point numbers.
+
+\item The example supports signed floating point numbers but there exists a type mismatch.
+
+\item The \textbf{parsec} library along with its variations does come close but again not completely.
+
+\item The libraries above provide a function to recognise signs but they need to be integrated with the parser.
+
+\item Changes need to be made in the \textit{Interpreter, Parser, Syntax} among others of the \textsc{Prolog} library in order to accomodate 
+the above.
+\end{enumerate}
+
+
+\subsection{Phase 2 : Moving towards a partial solution}
+
+\paragraph{}
+This section is concerned with the points in the recap listed above. Mainly points 2, 3 and 4 which are in the direction of adding parsing 
+capabilities to the the existing floating parsers. Going back to the libraries \textbf{parsec} and \textbf{parsec-number} which provides 
+functions like \textit{parsetest, floating, sign} and so on. The addition is from the \textit{Control.Monad} module namely \textit{ap}, 
+\mint{haskell}|ap :: Monad m => m (a -> b) -> m a -> m b |
+which is \textit{liftM} but it promotes function application. The result is a parser which can deal with signed floating point number. 
+Consider the following,
+
+\begin{minted}{haskell}
+floatParser :: [Char] -> IO ()
+floatParser s = parseTest (ap sign floating) s
+
+{--
+OUTPUT :-
+
+floatParser "12.3"
+12.3
+
+floatParser "-12.3"
+-12.3
+
+floatParser "+12.3"
+12.3
+
+--}
+
+\end{minted}
+
+will result in a parsed floating point number. Improving the code would be to allow signed floating point numbers to begin with a decimal  
+point and requiring a number after the decimal point. The \textbf{parsec-numbers} library provides a function \textit{floating3} with 
+accepts a  boolean value for restriction on the decimal parts of a number. 
+
+\mint{haskell}|floating3 :: Floating f => Bool -> CharParser st f|
+
+Consider the following function,
+\begin{minted}{haskell}
+
+floatParser :: [Char] -> IO ()
+floatParser x = Primitive.parseTest (ap sign
+	 (Numbers.floating3 True)) x 
+
+{--
+OUTPUT :-
+
+floatParser "-.3"
+-0.3
+
+floatParser "-3."
+parse error at (line 1, column 4):
+unexpected end of input
+expecting fraction
+
+--}
+\end{minted} 
+\paragraph{}
+So summing up, the function \textit{floatParser} parses signed and unsigned floating point numbers which may begin with a decimal point 
+but cannot be ending with one. But one mojor issue remains, the incompatibility of the types between the program above and how things are 
+done in the library.    
+
+\paragraph{}
+The \textbf{parsec} library has given rise to a number of modified libraries which add functionality and even claim to be ready for the 
+industry. Coming back to \textbf{parsec3} and \textbf{parsec3-numbers} which which provide the correct type signature with respect to the
+\textsc{Prolog} library. From the example above parsing the sign involves the same procedure as the derived libraries have the same 
+functions as the parent. 
+
+\paragraph{}
+So we have looked at a number of options that can be used to extend just the parser of the \textsc{Prolog} library. A last detail is that 
+floating point numbers have a decimal point contained in them. The issue here is that \textsc{Prolog} clauses written in a file are 
+terminated using a period, the same as floating point numbers. So for now (till we depend upon \textsc{Prolog} syntax) a decimal point will 
+be replaced by a question mark. Another change is that since the library parser does sign checking for us, the program below does not 
+require the functions \textit{plus} and \textit{minus}. The modified example from earlier is below,
+
+\begin{minted}[linenos=true]{haskell}
+{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE FlexibleContexts #-}
+
+
+module Experiment(float
+	)where
+
+-- Mehul Solanki.
+
+import Control.Monad
+import Text.Parsec
+import Control.Applicative hiding ((<|>))
+import Data.Functor.Identity
+import Text.Parsec.Prim
+
+(<++>) :: Applicative f => f [a] -> f [a] -> f [a]
+(<++>) a b = (++) <$> a <*> b
+
+(<:>) :: Applicative f => f a -> f [a] -> f [a]
+(<:>) a b = (:) <$> a <*> b
+
+number :: ParsecT [Char] u Data.Functor.Identity.Identity [Char]
+number = many1 digit
+
+integer :: ParsecT [Char] u Data.Functor.Identity.Identity [Char]
+integer = number
+
+--float :: Stream s m Char => ParsecT s u m Float
+--float :: ParsecT [Char] u Data.Functor.Identity.Identity Float
+--float =  fmap rd $ integer <++> decimal <++> exponent
+--    where rd       = read :: String -> Float
+--          decimal  = option "" $ char '.' <:> number
+--          exponent = option "" $ oneOf "eE" <:> integer
+
+float :: ParsecT String u Identity [Char]
+float = integer <++> decimal <++> exponent
+    where rd       = read :: String -> Float
+          decimal  = option "" $ char '?' <:> number
+          exponent = option "" $ oneOf "eE" <:> integer
+
+main :: IO ()          
+main = forever $ do putStrLn "Enter a float: "
+                    input <- getLine
+                    parseTest float input
+
+{--
+OUTPUT :-
+ 
+parseTest float "12?3"
+"12?3"
+--}
+\end{minted}  
+
+along with the syntax file,
+
+\begin{minted}[linenos]{haskell}
+
+{-# LANGUAGE DeriveDataTypeable, ViewPatterns, ScopedTypeVariables #-}
+module Syntax
+   ( Term(..), var, cut
+   , Clause(..), rhs
+   , VariableName(..), Atom, Goal, Program
+   , cons, nil, foldr_pl
+   , arguments -- FIXME Should not be exposed
+   , hierarchy
+   , Operator(..), Assoc(..)
+   )
+where
+
+import Data.Generics (Data(..), Typeable(..))
+import Data.List (intercalate)
+import Data.Char (isLetter)
+
+
+{--
+Intercalate Examples
+
+:t intercalate
+intercalate :: [a] -> [[a]] -> [a]
+
+intercalate [1..5] [[6..10], [11..15], [16..20]]
+[6,7,8,9,10,1,2,3,4,5,11,12,13,14,15,1,2,3,4,5,16,17,18,19,20]
+
+intercalate [1..5] [[6..10], [11..15]]
+[6,7,8,9,10,1,2,3,4,5,11,12,13,14,15]
+--}
+
+{--
+A Prolog Term can be an 
+
+Atom  
+Struct "hello" []
+hello
+Struct "hello" [Struct "a" []]
+hello(a)
+
+Variable
+Var (VariableName 125 "X")
+X#125
+
+Wildcard (Don't Care)
+_
+
+Cut
+Cut 0
+!
+Cut 4
+!
+
+--}
+
+data Term = Struct Atom [Term]
+          | Var VariableName
+          | Wildcard -- Don't cares 
+          | Cut Int
+      deriving (Eq, Data, Typeable)
+
+var :: String -> Term
+var = Var . VariableName 0
+
+cut :: Term
+cut = Cut 0
+
+{--
+
+Clause
+Clause (Struct "hello" [Struct "a" []]) ([Struct "world" []])
+"hello(a) :- world"
+
+
+Clausefn
+????
+
+--}
+
+data Clause = Clause { lhs :: Term, rhs_ :: [Goal] }
+            | ClauseFn { lhs :: Term, fn :: [Term] -> [Goal] }
+      deriving (Data, Typeable)
+
+rhs :: Clause -> [Term] -> [Goal]      
+rhs (Clause   _ rhs) = const rhs
+rhs (ClauseFn _ fn ) = fn
+
+data VariableName = VariableName Int String
+      deriving (Eq, Data, Typeable, Ord)
+
+type Atom         = String
+type Goal         = Term
+type Program      = [Clause]
+
+--Precedence, less than or equal to.
+instance Ord Term where
+   (<=) = wildcards <=! variables <=! atoms <=! compound_terms 
+   			<=! error "incomparable"
+
+-- Uses the auxiliary functions below 
+
+(<=!) :: Ord a => (t -> Maybe a) -> (t -> t -> Bool) -> t -> t -> 
+					Bool
+infixr 4 <=!
+(q <=! _) (q->Just l) (q->Just r) = l <= r 
+(q <=! _) (q->Just _) _ = True 
+(q <=! _) _ (q->Just _) = False 
+(_ <=! c) x y = c x y 
+
+{--
+The following functions take terms and convert them into Maybes
+--}
+
+wildcards :: Term -> Maybe ()
+wildcards Wildcard = Just ()
+wildcards _        = Nothing
+
+variables :: Term -> Maybe VariableName
+variables (Var v) = Just v
+variables _       = Nothing
+
+numbers :: Term -> Maybe Double
+numbers (Struct (reads->[(n :: Double,"")]) []) = Just n
+numbers _                                    = Nothing
+
+atoms :: Term -> Maybe [Atom]
+atoms (Struct a []) = Just [a]
+atoms _             = Nothing
+
+compound_terms :: Term -> Maybe (Int, Atom, [Term])
+compound_terms (Struct a ts) = Just (length ts, a, ts)
+compound_terms _             = Nothing
+
+-- Printing stuff
+instance Show Term where
+   show = prettyPrint False 0
+
+prettyPrint :: Bool -> Int -> Term -> [Char]
+prettyPrint True _ t@(Struct "," [_,_]) = "(" ++ 
+			prettyPrint False 0 t ++  ")"
+
+prettyPrint f n (Struct (flip lookup operatorTable->
+			Just (p,InfixOp assoc name)) [l,r]) =
+   parensIf (n >= p) $ prettyPrint f n_l l ++ spaced name ++
+   					 prettyPrint f n_r r
+     where (n_l,n_r) = case assoc of
+                           AssocLeft  -> (p-1, p)
+                           AssocRight -> (p, p-1)
+
+prettyPrint f n (Struct (flip lookup operatorTable->
+			Just (p,PrefixOp name)) [r]) =
+   parensIf (n >= p) $ name ++
+   				 prettyPrint f (p {- Non-associative -}) r
+
+prettyPrint _ _ t@(Struct "." [_,_]) =
+   let (ts,rest) = g [] t in
+      --case guard (isNil rest) >> sequence (map toChar ts) of
+      --   Just str -> prettyPrint str
+      --   Nothing  ->
+            "[" ++ intercalate "," (map (prettyPrint True 0) ts) ++ (if isNil rest then "" else "|" 
+            	++ (prettyPrint True 0) rest) ++  "]"
+   where g ts (Struct "." [h,t]) = g (h:ts) t
+         g ts t = (reverse ts, t)
+         isNil (Struct "[]" []) = True
+         isNil _                = False
+
+prettyPrint _ _ (Struct a [])   = a
+prettyPrint _ _ (Struct a ts)   = a ++ "(" ++ intercalate ", " (map (prettyPrint True 0) ts) ++ ")"
+prettyPrint _ _ (Var v)         = show v
+prettyPrint _ _ Wildcard        = "_"
+prettyPrint _ _ (Cut _)         = "!"
+--prettyPrint _ _ ((==cut)->True) = "!"
+--prettyPrint _ _ (Cut n)         = "!^" ++ show n
+
+
+spaced s = let h = head s
+               l = last s
+           in spaceIf (isLetter h) ++ s ++ spaceIf (isLetter l || ',' == l)
+
+spaceIf True  = " "
+spaceIf False = ""
+
+parensIf :: Bool -> String -> String
+parensIf True  s = "(" ++ s ++")"
+parensIf False s = s
+
+
+operatorTable :: [(String, (Int,Operator))]
+operatorTable = concat $ zipWith (map . g) [1..] $ hierarchy False
+ where g p op@(InfixOp _ name) = (name,(p,op))
+       g p op@(PrefixOp name)  = (name,(p,op))
+
+instance Show VariableName where
+   show (VariableName 0 v) = v
+   show (VariableName i v) = v ++ "#" ++  show i
+
+instance Show Clause where
+   show (Clause   lhs [] ) = show $ show lhs
+   show (Clause   lhs rhs) = show $ show lhs ++ " :- " ++ intercalate ", " (map show rhs)
+   show (ClauseFn lhs _  ) = show $ show lhs ++ " :- " ++ "<Haskell function>"
+
+
+
+foldr_pl :: (Term -> t -> t) -> t -> Term -> t
+foldr_pl f k (Struct "." [h,t]) = f h (foldr_pl f k t)
+foldr_pl _ k (Struct "[]" [])   = k
+
+cons t1 t2 = Struct "."  [t1,t2]
+nil        = Struct "[]" []
+
+data Operator = PrefixOp String
+              | InfixOp Assoc String
+data Assoc = AssocLeft
+           | AssocRight
+
+hierarchy :: Bool -> [[Operator]]
+hierarchy ignoreConjunction =
+   --[ [ InfixOp NonAssoc "-->", InfixOp NonAssoc ":-" ]
+   [ [ infixR ";" ] ] ++
+   (if ignoreConjunction then [] else [ [ infixR "," ] ])  ++
+   [ [ prefix "\\+" ]
+   , map infixL ["<", "=..", "=:=", "=<", "=", ">=", ">", "\\=", "is", 
+   		"==", "@<", "@=<", "@>=", "@>"]
+   , map infixL ["+", "-", "\\"]
+   , [ infixL "*"]
+   , [ infixL "mod" ]
+   , [ prefix "-" ]
+   , [ prefix "$" ] -- used for quasi quotation
+   ]
+ where
+   prefix = PrefixOp
+   infixL = InfixOp AssocLeft
+   infixR = InfixOp AssocRight
+
+
+--infix 6 \\
+--x \\ y = Struct "\\" [x,y]
+
+arguments ts xs ds = ts ++ [ xs, ds ]
+-- arguments ts xs ds = [ xs \\ ds ] ++ ts
+
+
+{--
+Data Type Genric Programming / Generic Programming is a way of defining 
+functions to work on Structures of Data Types rather than Data Types 
+themselves. 
+
+Thus a single function can be designed to work on a number of Data Types
+
+--}
+\end{minted}
+
+the \textsc{Prolog} example to be parsed,
+\begin{minted}[linenos=true]{prolog}
+% Mehul Solanki.
+
+% Shoe Problem.
+
+/*
+
+Harriet, upon returning from the mall, is happily describing her four shoe purchases 
+to her friend Aurora. Aurora just loves the four different kinds of shoes that Harriet 
+bought (ecru espadrilles, fuchsia flats, purple pumps, and suede sandals), 
+but Harriet can't recall at which different store  (Foot Farm, Heels in a Handcart, 
+The Shoe Palace, or Tootsies) she got each pair. Can you help these two figure out the 
+order in which Harriet bought each pair of shoes, and where she bought each? 
+
+1. Harriet bought fuchsia flats at Heels in a Handcart.
+2. The store she visited just after buying her purple pumps was not Tootsies.
+3. The Foot Farm was Harriet's second stop.
+4. Two stops after leaving The Shoe Place, Harriet bought her suede sandals.
+
+Determine: Order - Shoes - Store 
+*/
+
+myList(['a', 'A', -12?3]).
+
+append([],X,X).
+append([H1| T1], L2,[H1| T2]) :- append(T1, L2, T2).
+
+right(X,Y,L):- 	append(_,[X,Y|_],L).
+
+len([],0).
+len([_|T],N) :- len(T,X), N is X+1.
+
+start(S) :-
+len(S,4),
+S = [[Shoe1,Store1],[Shoe2,Store2],[Shoe3,Store3],[Shoe4,Store4]],
+member(Store1,[ffs,hhs,tsps,ts]),
+member(Store2,[ffs,hhs,tsps,ts]),
+member(Store3,[ffs,hhs,tsps,ts]),
+member(Store4,[ffs,hhs,tsps,ts]),	
+member(Shoe1,[ee,ff,pp,ss]),
+member(Shoe2,[ee,ff,pp,ss]),
+member(Shoe3,[ee,ff,pp,ss]),
+member(Shoe4,[ee,ff,pp,ss]),
+not(Store1 = Store2),
+not(Store1 = Store3),
+not(Store1 = Store4),
+not(Store2 = Store3),
+not(Store2 = Store4),
+not(Store3 = Store4),
+not(Shoe1 = Shoe2),
+not(Shoe1 = Shoe3),
+not(Shoe1 = Shoe4),
+not(Shoe2 = Shoe3),
+not(Shoe2 = Shoe4),
+not(Shoe3 = Shoe4),
+member([ff,hhs],S),
+not(right([pp,_],[_,ts],S)),
+S = [_,[_,ffs],_,_],
+S = [[_,tsps],_,_,[ss,_]]. 
+
+
+/*
+start(S).
+S = [[ee, tsps], [pp, ffs], [ff, hhs], [ss, ts]] ;
+S = [[pp, tsps], [ee, ffs], [ff, hhs], [ss, ts]] ;
+false.
+*/
+
+\end{minted}
+
+
+\begin{minted}[linenos=true]{haskell}
+
+\end{minted}
+
+and finally the parser,
+
+\begin{minted}[linenos]{haskell}
+
+
+-- Mehul Solanki.
+
+-- A simple parser for Prolog in Haskell derived and modified 
+-- from prolog-0.2.0.1.
+
+module Parser
+   ( consult, consultString, parseQuery
+   , program, whitespace, comment, clause, terms, term, bottom, vname
+   ) where
+
+
+import Text.Parsec
+import Text.Parsec.Expr hiding (Assoc(..))
+import qualified Text.Parsec.Expr as Parsec
+import qualified Text.Parsec.Token as P
+import Text.Parsec.Language (emptyDef)
+import Control.Applicative ((<$>),(<*>),(<$),(<*))
+import Data.Functor.Identity  -- Added later was not there as a result of which the signatures of 
+													   -- certain parser functions  were throwing errors
+                              
+
+import Text.ParserCombinators.Parsec.Number as Numbers
+
+
+import Experiment
+
+import Syntax
+
+{--
+Like consult in Prolog.
+If the program is parsed correctly, then each predicate 
+is added to the list of results.  
+--}
+consult :: FilePath -> IO (Either ParseError Program)
+consult = fmap consultString . readFile
+{--
+consult "/home/mehul/Dropbox/PrologPrograms/shoeStore.pl"
+Right ["myList([a,A,-(12?3)])",
+"append([], X, X)",
+"append([H1|T1], L2, [H1|T2]) :- append(T1, L2, T2)",
+"right(X, Y, L) :- append(_, [X,Y|_], L)",
+"len([], 0)",
+"len([_|T], N) :- len(T, X), 
+                  N is X+1",
+"start(S) :- len(S, 4), 
+            S=[[Shoe1,Store1],[Shoe2,Store2],[Shoe3,Store3],
+            [Shoe4,Store4]], 
+            member(Store1, [ffs,hhs,tsps,ts]), 
+            member(Store2, [ffs,hhs,tsps,ts]), 
+            member(Store3, [ffs,hhs,tsps,ts]), 
+            member(Store4, [ffs,hhs,tsps,ts]), 
+            member(Shoe1, [ee,ff,pp,ss]), 
+            member(Shoe2, [ee,ff,pp,ss]), 
+            member(Shoe3, [ee,ff,pp,ss]), 
+            member(Shoe4, [ee,ff,pp,ss]), 
+            not(Store1=Store2), 
+            not(Store1=Store3), 
+            not(Store1=Store4), 
+            not(Store2=Store3), 
+            not(Store2=Store4), 
+            not(Store3=Store4), 
+            not(Shoe1=Shoe2), 
+            not(Shoe1=Shoe3), 
+            not(Shoe1=Shoe4), 
+            not(Shoe2=Shoe3), 
+            not(Shoe2=Shoe4), 
+            not(Shoe3=Shoe4), 
+            member([ff,hhs], S), 
+            not(right([pp,_], [_,ts], S)), 
+            S=[_,[_,ffs],_,_], S=[[_,tsps],_,_,[ss,_]]"]
+--}
+
+
+consultString :: String -> Either ParseError Program
+consultString = parse (whitespace >> program <* eof) "(input)"
+{--
+consultString "hello."
+Right ["hello"]
+--}
+
+parseQuery :: String -> Either ParseError [Term]
+parseQuery = parse (whitespace >> terms <* eof) "(query)"
+{--
+parseQuery "hello(X)"
+Right [hello(X)]
+--}
+
+program :: ParsecT String () Data.Functor.Identity.Identity [Clause]
+program = many (clause <* char '.' <* whitespace)
+
+whitespace :: ParsecT String () Data.Functor.Identity.Identity ()
+whitespace = skipMany (comment <|> skip space <?> "")
+
+comment :: ParsecT String () Data.Functor.Identity.Identity ()
+comment = skip $ choice
+   [ string "/*" >> (manyTill anyChar $ try $ string "*/")
+   , char '%' >> (manyTill anyChar $ try $ skip newline <|> eof)
+   ]
+
+skip :: ParsecT String () Data.Functor.Identity.Identity a -> 
+			ParsecT String () Data.Functor.Identity.Identity ()
+skip = (>> return ())
+
+clause :: ParsecT String () Data.Functor.Identity.Identity Clause
+clause = do t <- struct <* whitespace
+            dcg t <|> normal t
+   where
+      normal t = do
+            ts <- option [] $ do string ":-" <* whitespace
+                                 terms
+            return (Clause t ts)
+
+      dcg t = do
+            string "-->" <* whitespace
+            ts <- terms
+            return (translate (t,ts))
+
+      translate ((Struct a ts), rhs) =
+         let lhs' = Struct a (arguments ts (head vars) (last vars))
+             vars = map (var.("d_"++).(a++).show) [0..length rhs] 
+             			-- We explicitly choose otherwise invalid variable names
+             rhs' = zipWith3 translate' rhs vars (tail vars)
+         in Clause lhs' rhs'
+
+      translate' t s s0 | isList t   = Struct "=" 
+      		[ s, foldr_pl cons s0 t ]     -- Terminal
+      translate' t@(Struct "{}" ts) s s0 = 
+      		foldr and (Struct "=" [ s, s0 ]) ts  -- Braced terms
+      translate' (Struct a ts)  s s0 =
+      		 Struct a (arguments ts s s0)             -- Non-Terminal
+
+      and x y = Struct "," [x,y]
+
+
+isList :: Term -> Bool
+isList (Struct "." [_,_]) = True
+isList (Struct "[]" [])   = True
+isList _                  = False
+
+terms :: ParsecT String () Identity [Term]
+terms = sepBy1 termWithoutConjunction (charWs ',')
+
+term :: ParsecT String () Identity Term
+term = term' False
+
+termWithoutConjunction :: ParsecT String () Identity Term
+termWithoutConjunction = term' True
+
+term' :: Bool -> ParsecT String () Identity Term
+term' ignoreConjunction = buildExpressionParser (reverse $ map (map toParser) $
+			 hierarchy ignoreConjunction) (bottom <* whitespace)
+
+bottom :: ParsecT String () Identity Term
+bottom = variable
+      <|> struct
+      <|> list
+      <|> stringLiteral
+      <|> cut <$ char '!'
+      <|> Struct "{}" <$> between (charWs '{') (char '}') terms
+      <|> between (charWs '(') (char ')') term
+
+toParser :: Syntax.Operator -> Parsec.Operator String u Identity Term
+toParser (PrefixOp name)      = Prefix (reservedOp name >> 
+			return (\t -> Struct name [t]))
+toParser (InfixOp assoc name) = Infix  (reservedOp name >> 
+					return (\t1 t2 -> Struct name [t1, t2]))
+                                       (case assoc of AssocLeft  -> Parsec.AssocLeft
+                                                      AssocRight -> Parsec.AssocRight)
+
+reservedOp :: String -> ParsecT String u Identity ()
+reservedOp = P.reservedOp $ P.makeTokenParser $ emptyDef
+   { P.opStart = oneOf ";,<=>\\i*+m@"
+   , P.opLetter = oneOf "=.:<+"
+   , P.reservedOpNames = operatorNames
+   , P.caseSensitive = True
+   }
+
+charWs :: Char -> ParsecT String () Identity Char
+charWs c = char c <* whitespace
+
+operatorNames :: [[Char]]
+operatorNames = [ ";", ",", "<", "=..", "=:=", "=<", "=", ">=", ">", "\\=", 
+				"is", "*", "+", "-", "\\", "mod", "div", "\\+" ]
+
+variable :: ParsecT String u Identity Term
+variable = (Wildcard <$ try (char '_' <* 
+		notFollowedBy (alphaNum <|> char '_')))
+       <|> Var <$> vname
+       <?> "variable"
+
+vname :: ParsecT String u Identity VariableName
+vname = VariableName 0 <$> ((:) <$> upper    <*> many  
+			(alphaNum <|> char '_') <|>
+                            (:) <$> char '_' <*> many1 (alphaNum <|> char '_'))
+
+atom :: ParsecT String u Identity [Char]
+atom = (:) <$> lower <*> many (alphaNum <|> char '_')
+   <|> Experiment.float 
+   <|> many1 digit
+   <|> choice (map string operatorNames)
+   <|> many1 (oneOf "#$&*+/.<=>\\^~")
+   <|> between (char '\'') (char '\'') (many (noneOf "'"))
+   <?> "atom"
+
+struct :: ParsecT String () Identity Term
+struct = do a <- atom
+            ts <- option [] $ between (charWs '(') (char ')') terms
+            return (Struct a ts)
+
+list :: ParsecT String () Identity Term
+list = between (charWs '[') (char ']') $
+         flip (foldr cons) <$> option []  terms
+                           <*> option nil (charWs '|' >> term)
+
+stringLiteral :: ParsecT String u Identity Term
+stringLiteral = foldr cons nil . map representChar <$> between (char '"') (char '"') 
+			(try (many (noneOf "\"")))
+
+representChar :: Enum a => a -> Term
+representChar c = Struct (show (fromEnum c)) [] 
+		-- This is the classical Prolog representation of chars as code points.
+--representChar c = Struct [c] [] 
+		-- This is the more natural representation as one-character atoms.
+--representChar c = Struct "char" [Struct (show (fromEnum c)) []] 
+		-- This is a representation as tagged code points.
+--toChar :: Term -> Maybe Char
+--toChar (Struct "char" [Struct (toEnum . read->c) []]) = Just c
+--toChar _                                              = Nothing
+
+\end{minted}
+
+
+\paragraph{}
+So that is it for now.
+
+
+
+
+
+
+
+
+\end{homeworkProblem}
+
+\clearpage
+%----------------------------------------------------------------------------------------
+%	PROBLEM 2
+%----------------------------------------------------------------------------------------
+
+\begin{homeworkProblem}[Unification Monad]
+%\lipsum[2]
+
+
+%\problemAnswer{
+%\begin{center}
+%\includegraphics[width=0.75\columnwidth]{example_figure} % Example image
+%\end{center}
+
+%\lipsum[3-5]
+Coming soon . . . . . . 
+
+}
+\end{homeworkProblem}
+\clearpage
+%----------------------------------------------------------------------------------------
+
+\begin{homeworkProblem}[Narrowing in Curry]
+This document has been written from various sources such as reports, manuals and research papers from the Curry programming language 
+and implementing small working examples.
+
+\begin{enumerate}
+\item Functional Programming == Equational Definition of Functions.
+
+\item Logic Programming == First Order Predicate Logic.
+
+\item Therefore,Functional Logic Programming == Equational Logic Programming (resolution + replacement of subterms).
+
+\item Narrowing is a feature found in high level declarative languages like \textsc{Curry} and \textsc{TOY}.
+
+\item Enables function like evaluation of expressions containing containing uninstantiated variables.
+\\* Narrowing == Glue.
+
+\item Residuation is somewhat like an \textcolor{red}{\textbf{alternative}} for Narrowing, provided by languages such as 
+\textsc{Escher} and \textsc{Life}. Both features can co-exist.
+
+\item   If Narrowing is not executed it means that the computation is functional and almost as efficient as a functional interpreter.
+
+\item Narrowing is used for solving sets of equations possibly involving user-defined data types. ??????????????
+
+\item 
+\end{enumerate}
+
+\subsection{Rewriting}
+\begin{enumerate}
+ \item It is a \textcolor{red}{special case of Narrowing}.
+ 
+ \item Rewriting rules transform expressions / terms.
+ 
+ \item A set of such rules is called a Rewrite System.
+
+ \item If the no.of expressions are infinite then it contains variables. If there is a single occurrence then the variable is just an anonymous place holder 
+ and is represented by ``\_``.
+ 
+ \item An expression has to match with the L.H.S of the rule for finding out what each variable stands for them to be equal.	
+ 
+ \item For example, 
+ \\* \begin{math}
+  top(S) \rightarrow E
+  \\*empty \rightarrow Empty Stack
+  \\*push(E,S) \rightarrow S
+  \\*pop(S) \rightarrow S
+  
+  \\*An expression,
+  \\*top(push(1,empty)) \rightarrow 1
+  \\*pop(push(1,empty)) \rightarrow empty
+  
+ \end{math}
+ 
+\item \textit{push, empty} construct stack instances hence they are ''data constructors`` while \textit{pop, top} operate on stack instances hence they are 
+''defined operations``. A rule defining an operation shows how to rewrite an expression with constructors and variables. This is called 
+\textbf{Constructor Discipline}.
+ 
+ \item Expressions with constructors only abstract data and evaluate to themselves. 
+
+ \item Rewrite system specifies what are the steps but not when and where to perform them, hence a strategy is required for the same.
+ \end{enumerate}
+
+ \subsection{Narrowing}
+ \begin{enumerate}
+  \item Problems arise when expressions to evaluate contain variables, this is when Narrowing comes into play.
+  
+  \item A variable in a rule stands for \textbf{any} value while a variable in an expression stands for some value. ????????????????????
+  
+  \item Narrowing guesses some value for some variable then does the replacing in the context of t and rewrites the instantiation of t as usual.
+  
+  \item An instantiation of an expression t is found by "unifying" t with the left hand side of a rule. Unification is the process of finding what each variable
+  in t and l stands for them to be equal. The substitution is called a unifier.
+  
+  \item The narrowing space of an expression t is the set of all expressions obtained in zero or more narrowing steps from t. 
+  
+  \item Finding the values of the variables for both sides to be equal is known as equation solving which can result in no solutions or many solutions.
+  
+  \item \textbf{Soundness} means that any instantiation of the variables of an equation computed while narrowing the sides of the equation
+   to a same datum is a solution of the equation. 
+
+   \item \textbf{Completeness} means that if an equation has a solution, narrowing will find that solution, or a more general one, while narrowing 
+   the sides of the equation to a same datum.
+   
+   \item Operations that are allowed to narrow their arguments are called \textbf{flexible}.
+   
+   \item Operations that are not allowed to narrow their arguments are called \textbf{rigid}.
+ 
+    \item The expressions used in conditions are called \textbf{constraints}.
+    
+    \item \textbf{Left Linear} each variable in L.H.S occurs only once.  The following is \textcolor{red}{not} left-linear,
+    \begin{minted}[linenos]{haskell} 
+     member x (x:_) = True
+    \end{minted}
+
+    \item \textbf{Overlapping} means that more than one rule may reqwrite the same expression, helps with non-determinism.
+    \begin{minted}[linenos]{haskell}
+     insert x y = x:y
+     insert x (y:ys) = y:insert x ys
+{--     
+insert x [1..5] where x free
+[1 of 3] Skipping  Prelude ( /home/mehul/kics2-0.3.1/lib/Prelude.curry, 
+/home/mehul/kics2-0.3.1/lib/.curry/Prelude.fcy )
+[2 of 3] Skipping  Program1 ( Program1.curry, .curry/Program1.fcy )
+[3 of 3] Compiling Curry_Main_Goal 
+(Curry_Main_Goal.curry, .curry/Curry_Main_Goal.fcy )
+Evaluating expression: insert x [1..5] where x free
+ {x = _x5} [_x5,1,2,3,4,5]
+{x = _x5} [1,_x5,2,3,4,5]
+{x = _x5} [1,2,_x5,3,4,5]
+{x = _x5} [1,2,3,_x5,4,5]
+{x = _x5} [1,2,3,4,_x5,5]
+{x = _x5} [1,2,3,4,5,_x5]
+--}
+\end{minted}
+
+\item \textbf{Call time choice semantics / sharing} the operands of an operator are the same for example,
+\\* \mint{haskell}|double x = x + x|
+
+\item 
+ \end{enumerate}
+
+
+ \subsection{Curry}
+ \begin{enumerate}
+  \item Curry Program == Rewrite System with Constructor Discipline.
+  
+  \item \textsc{Curry} is lazy like \textsc{Haskell}.
+  
+  \item Two compilers for \textsc{Curry}.
+  \\* KiCS == \textsc{Curry} to \textsc{Haskell}.
+  \\* PAKCS == \textsc{Curry} to \textsc{Prolog}.
+  
+  \item Two types of equality, \textbf{ Constrained equality (=:=)} and \textbf{Boolean equality(==)}. The test is an expression of type \textbf{Success}.
+ 
+ \item \textbf{Constrained equality (=:=)} is used to solve an equation and is flexible.
+ 
+ \item \textbf{Boolean equality(==)} is used to check whether an equation holds and is rigid.
+ 
+ \item A boolean test t is a short hand for t =:= True.
+ 
+  \item \textbf{Extra variables} are the variables that occur on the R.H.S and/or in the condition of a rule but not on the L.H.S.
+  
+  \item \textsc{Curry} supports higher order functions but \textcolor{red}{\textbf{without}} higher order narrowing.
+                                                            
+ \end{enumerate}
+
+ 
+\end{homworkProblem}
+
+\clearpage
+
+\begin{homeworkProblem}[david-0.2.0.1]
+ Syntax.hs
+ \\* PrettyPrint.hs
+ \\* Variables.hs
+ \\* Unflatten.hs
+ \\* Parser.hs
+ \\* Database.hs
+ \\*
+\end{homeworkProblem}
+
+\clearpage
+
+\begin{homeworkProblem}[Tutorial]{Adding variable search strategies to solve a query in \textsc{Prolog} for \textsc{Hugs 98}.}
+
+\vspace{5mm}
+
+The following are the files in the library categorized according to their purpose,
+\begin{description}
+ \item[$\bullet$] Engines
+ \begin{enumerate}
+  \item Andorra Engine 
+  \item Pure Prolog Engine
+  \item Stack Engine
+ \end{enumerate}
+
+ \item[$\bullet$] Functions for Interactive programs
+ \begin{enumerate}
+  \item AnsiInteract
+  \item AnsiScreen
+  \item Interact
+ \end{enumerate}
+
+ \item[$\bullet$] Data Types and Utilities
+ \begin{enumerate}
+  \item Subst (Also has unification)
+  \item Number
+  \item Prolog
+  \item ListUtils
+ \end{enumerate}
+ 
+ \item[$\bullet$] Parsing and Hugs libraries
+ \begin{enumerate}
+  \item ParseLib
+  \item CombParse
+  \item StdLibs
+  \item HugLibs
+ \end{enumerate}
+
+ \item[$\bullet$] Main
+
+\end{description}
+
+
+\paragraph{}
+Talking about the three engines in the library, each of them exports a function
+\mint{haskell}|prove    :: Database -> [Term] -> [Subst]|
+
+Each engine has its own set of data structures and helper functions. 
+
+\begin{enumerate}
+ \item Pure Engine
+ 
+ \\* This is how the Prolog works by default. It works using Proof Trees,
+ \mint{haskell}$data Prooftree = Done Subst  |  Choice [Prooftree]$
+
+\* A tree can have two types of nodes, 
+\begin{enumerate}
+ \item \mint{haskell}$Done s$ which represents a solution to the current goal. 
+
+ \item \mint{haskell}$Choice [Prooftree]$ which represnts a list of subtrees for proof of each subgoals
+\end{enumerate}
+
+
+
+\end{homeworkProblem}
+
+
+\begin{homeworkProblem}{Things to do}
+\begin{description}
+ \item[$\bullet$] \textsc{Prolog} for \textsc{Hugs 98}
+\begin{enumerate}
+ \item Embed a search strategy.
+ 
+ \item Try and print \texttt{Subst} datatype to get an idea about the \texttt{Prooftree}.
+ 
+ \item Implement a program to distinguish between the search strategies.
+\end{enumerate}
+
+\item[$\bullet$] unification-fd
+ \begin{enumerate}
+  \item Replace unificaion in \texttt{prolog-0.2.0.1} using the library. 
+ \end{enumerate}
+
+ 
+\end{description}
+
+\end{homeworkProblem}
+
+
+
+
+
+\end{document}

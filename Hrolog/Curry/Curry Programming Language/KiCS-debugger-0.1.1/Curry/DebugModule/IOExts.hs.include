@@ -1,0 +1,66 @@
+{- Auto generated stubs for external functions and types
+   Remove this comment to suppress warnings. -}
+module Curry.DebugModule.IOExts where
+ 
+instance DI.GenTerm (IORef dm a) where
+        genTerm x0 = Prelude.error "not implemented"
+ 
+data (DM.DM dm, DI.GenTerm a) => IORef dm a = IORef a
+ 
+strict_prim_execCmd ::
+                    (DM.DM dm) =>
+                      Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                        dm
+                          (Curry.DebugModule.Prelude.IO dm
+                             (Curry.DebugModule.Prelude.Tuple3 Curry.DebugModule.IO.Handle
+                                Curry.DebugModule.IO.Handle
+                                Curry.DebugModule.IO.Handle))
+strict_prim_execCmd x0
+  = hook_strict_prim_execCmd x0 (Prelude.error "not implemented")
+ 
+strict_prim_connectToCmd ::
+                         (DM.DM dm) =>
+                           Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                             dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.IO.Handle)
+strict_prim_connectToCmd x0
+  = hook_strict_prim_connectToCmd x0
+      (Prelude.error "not implemented")
+ 
+strict_prim_setAssoc ::
+                     (DM.DM dm) =>
+                       Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                         Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                           dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_prim_setAssoc x0 x1
+  = hook_strict_prim_setAssoc x0 x1 (Prelude.error "not implemented")
+ 
+strict_prim_getAssoc ::
+                     (DM.DM dm) =>
+                       Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                         dm
+                           (Curry.DebugModule.Prelude.IO dm
+                              (Curry.DebugModule.Prelude.Maybe
+                                 (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char)))
+strict_prim_getAssoc x0
+  = hook_strict_prim_getAssoc x0 (Prelude.error "not implemented")
+ 
+strict_newIORef ::
+                (DM.DM dm, DI.GenTerm a) =>
+                  a -> dm (Curry.DebugModule.Prelude.IO dm (IORef a))
+strict_newIORef x0
+  = hook_strict_newIORef x0 (Prelude.error "not implemented")
+ 
+strict_prim_readIORef ::
+                      (DM.DM dm, DI.GenTerm a) =>
+                        IORef a -> dm (Curry.DebugModule.Prelude.IO dm a)
+strict_prim_readIORef x0
+  = hook_strict_prim_readIORef x0 (Prelude.error "not implemented")
+ 
+strict_prim_writeIORef ::
+                       (DM.DM dm, DI.GenTerm a) =>
+                         IORef a ->
+                           a ->
+                             dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_prim_writeIORef x0 x1
+  = hook_strict_prim_writeIORef x0 x1
+      (Prelude.error "not implemented")

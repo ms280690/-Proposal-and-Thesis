@@ -1,0 +1,69 @@
+{- Auto generated stubs for external functions and types
+   Remove this comment to suppress warnings. -}
+module Curry.DebugModule.Socket where
+ 
+instance DI.GenTerm (Socket dm) where
+        genTerm x0 = Prelude.error "not implemented"
+ 
+data (DM.DM dm) => Socket dm = Socket
+ 
+strict_prim_listenOn ::
+                     (DM.DM dm) =>
+                       Curry.DebugModule.Prelude.Int ->
+                         dm (Curry.DebugModule.Prelude.IO dm Socket)
+strict_prim_listenOn x0
+  = hook_strict_prim_listenOn x0 (Prelude.error "not implemented")
+ 
+strict_listenOnFresh ::
+                     (DM.DM dm) =>
+                       dm
+                         (Curry.DebugModule.Prelude.IO dm
+                            (Curry.DebugModule.Prelude.Tuple2 Curry.DebugModule.Prelude.Int
+                               Socket))
+strict_listenOnFresh
+  = hook_strict_listenOnFresh (Prelude.error "not implemented")
+ 
+strict_prim_socketListen ::
+                         (DM.DM dm) =>
+                           Socket ->
+                             Curry.DebugModule.Prelude.Int ->
+                               dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_prim_socketListen x0 x1
+  = hook_strict_prim_socketListen x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_prim_socketAccept ::
+                         (DM.DM dm) =>
+                           Socket ->
+                             dm
+                               (Curry.DebugModule.Prelude.IO dm
+                                  (Curry.DebugModule.Prelude.Tuple2
+                                     (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char)
+                                     Curry.DebugModule.IO.Handle))
+strict_prim_socketAccept x0
+  = hook_strict_prim_socketAccept x0
+      (Prelude.error "not implemented")
+ 
+strict_prim_waitForSocketAccept ::
+                                (DM.DM dm) =>
+                                  Socket ->
+                                    Curry.DebugModule.Prelude.Int ->
+                                      dm
+                                        (Curry.DebugModule.Prelude.IO dm
+                                           (Curry.DebugModule.Prelude.Maybe
+                                              (Curry.DebugModule.Prelude.Tuple2
+                                                 (Curry.DebugModule.Prelude.List
+                                                    Curry.DebugModule.Prelude.Char)
+                                                 Curry.DebugModule.IO.Handle)))
+strict_prim_waitForSocketAccept x0 x1
+  = hook_strict_prim_waitForSocketAccept x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_prim_connectToSocket ::
+                            (DM.DM dm) =>
+                              Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                                Curry.DebugModule.Prelude.Int ->
+                                  dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.IO.Handle)
+strict_prim_connectToSocket x0 x1
+  = hook_strict_prim_connectToSocket x0 x1
+      (Prelude.error "not implemented")

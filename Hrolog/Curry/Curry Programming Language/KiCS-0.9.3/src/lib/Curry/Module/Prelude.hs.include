@@ -1,0 +1,1362 @@
+[ForType "IO" Nothing
+,ForType "Float" Nothing
+,ForType "Char" Nothing
+,ForType "[]" (Just [Show,Read,BaseCurry,Curry])
+,ForType "Nat" (Just [Show,Read])
+,ForType "Int" (Just [Show,Read])
+,ForType "Success" (Just [Show,Read,BaseCurry])
+,ForType "Bool" (Just [Declaration,BaseCurry])
+,SomeFunctions
+]
+
+import Data.Char
+import Data.List
+import System.IO.Unsafe
+import Data.IORef
+
+import Prelude hiding ((==),(>>=),return,catch)
+import qualified Prelude ((==),(>>=),return) 
+import System.IO
+
+#if __GLASGOW_HASKELL__ >= 610
+import Control.OldException (catch)
+#else
+import Control.Exception (catch)
+#endif
+
+-----------------------------------------------------------------
+-- curry number types
+-----------------------------------------------------------------
+
+type C_Float = Prim Float
+
+-----------------------------------------------------------------
+-- The curry IO monad
+-----------------------------------------------------------------
+
+data C_IO t0 = C_IO (State -> IO (IOVal t0))
+  | C_IOFail C_Exceptions
+  | C_IOOr OrRef (Branches (C_IO t0))
+
+data IOVal t0 = IOVal t0
+  | IOValFail C_Exceptions
+  | IOValOr OrRef (Branches (IO (IOVal t0)))
+
+data C_Bool = C_False
+  | C_True
+  | C_BoolFail Curry.RunTimeSystem.C_Exceptions
+  | C_BoolOr Curry.RunTimeSystem.OrRef (Curry.RunTimeSystem.Branches C_Bool)
+  | C_BoolAnd [C_Bool]
+
+data C_Char = C_Char !Char
+  | SearchChar  C_Four  C_Four  C_Four  C_Four
+  | C_CharFail C_Exceptions
+  | C_CharOr OrRef (Branches C_Char)
+
+trace s x = unsafePerformIO (putStrLn s >> preturn x) 
+-----------------------------------------------------------------
+-- type classes to extend BaseCurry to full Curry
+-----------------------------------------------------------------
+
+type StrEqResult = C_Bool
+
+class (BaseCurry a,Show a,Read a) => Curry a where
+  -- basic equalities 
+  strEq :: a -> a -> Result StrEqResult
+  eq    :: a -> a -> Result C_Bool
+
+  -- some generics
+  propagate :: (forall b. Curry b => Int -> b -> Result b) -> a -> Result a
+  foldCurry :: (forall c. Curry c => c -> b -> Result b) -> b -> a -> Result b
+
+  -- name of the type
+  typeName :: a -> String
+
+  -- show qualified terms
+  showQ :: Int -> a -> String -> String 
+  showQ = showsPrec
+
+  showQList :: [a] -> String -> String
+  showQList = showQStandardList
+
+  -- generic programming
+  --toC_Term   :: HNFMode -> State  -> a -> C_Data
+  --fromC_Term :: C_Data -> a
+
+class Generate a where
+  genFree    :: Int -> [a]
+  maxArity   :: a -> Int
+
+-----------------------------------------------------------------
+-- external Show instances
+-----------------------------------------------------------------
+
+
+instance (Show t0) => Show (IOVal t0) where
+  showsPrec d (IOVal x1) = showParen (d>10) showStr
+   where
+    showStr  = showString "IOVal" . showsPrec 11 x1
+  showsPrec _ (IOValOr i _) = showString ('_':show (deref i))
+
+instance Show (IO (IOVal a)) where
+  show _  = "IO"
+
+instance Show (C_IO a) where
+  show _  = "IO"
+
+instance Show C_Success where
+  showsPrec _ C_Success = showString "success"
+  showsPrec _ (C_SuccessOr ref _) = showString ('_':show (deref ref))
+
+instance Show (a->b) where
+  show _ = "FUNCTION"
+
+instance Show a => Show (Prim a) where
+  show (PrimValue x) = show x
+  show (PrimOr r _) = "_"++show (deref r)
+
+instance Show a => Show (List a) where
+    showsPrec = showsPrecList (showsPrec 0) (showsPrec 0)
+
+showsPrecList :: (a -> ShowS) -> ([a] -> ShowS) -> Int -> List a -> ShowS
+showsPrecList recursiveCall listCall _ (ListOr r _) = 
+  showString ('_':show (deref r))
+showsPrecList recursiveCall listCall _ xs 
+  | isFreeList xs = showChar '(' . showFreel xs
+  | otherwise     = listCall (toHaskellList xs)
+      where
+        isFreeList List = False
+        isFreeList (ListOr _ _) = True
+        isFreeList (_ :< xs) = isFreeList xs
+        isFreeList _ = True
+
+        showFreel (x:<xs)         = recursiveCall x . showChar ':' . showFreel xs
+	showFreel (ListOr r _)    = showString ('_':show (deref r)++")")
+
+showQStandardList :: Curry a => [a] -> ShowS
+showQStandardList xs = showChar '[' . 
+                       foldr (.) (showChar ']') 
+                             (intersperse (showChar ',') (map (showQ 0) xs))
+
+fourToInt :: C_Four -> Either String Int
+fourToInt  C_F0 = Right 0
+fourToInt  C_F1 = Right 1
+fourToInt  C_F2 = Right 2
+fourToInt  C_F3 = Right 3
+fourToInt  x@(C_FourOr _ _) = Left (show x)
+
+intToFour :: Int -> C_Four
+intToFour  0 = C_F0
+intToFour  1 = C_F1
+intToFour  2 = C_F2
+intToFour  3 = C_F3
+
+scToChar ::  C_Four ->  C_Four ->  C_Four ->  C_Four -> Either String Char
+scToChar f1 f2 f3 f4 
+  = chr' ((fourToInt f1**64)+++(fourToInt f2**16)+++(fourToInt f3**4)+++fourToInt f4)
+  where 
+    Left s  ** _  = Left s
+    Right i ** j  = Right (i*j)
+    
+    Left s  +++ _  = Left s
+    Right i +++ Left s  = Left s
+    Right i +++ Right j = Right (i+j)
+    chr' (Right i) = Right (chr i)
+    chr' (Left s)  = Left s
+
+charToSc ::  Char -> C_Char
+charToSc c = SearchChar (intToFour d64) (intToFour d16) (intToFour d4) (intToFour m4)
+  where
+    o = ord c
+    (d64,m64) = divMod o 64
+    (d16,m16) = divMod m64 16
+    (d4,m4)   = divMod m16 4
+    
+instance Show C_Four where
+  showsPrec d (C_FourOr r _) = showChar '_' . showsPrec d (deref r)
+  showsPrec _ _ = error "probably due to usage of ($#) instead of ($##) \
+                        \for an external function with argument type string or character"
+
+instance Show C_Char where
+  show (C_Char c) = show c
+  show (SearchChar f1 f2 f3 f4) 
+    = either id show (scToChar f1 f2 f3 f4)
+  show (C_CharOr r _) = '_':show (deref r)
+
+  showList cs = if any isFreeChar cs
+                  then showChar '[' . showFreel cs
+                  else showChar '"' . showl cs   -- "
+    where 
+      showl []       = showChar '"'
+      showl (C_Char '"':cs) = showString "\\\"" . showl cs
+      showl (C_Char c:cs)
+       | oc <= 7   = showString "\\00" . shows oc . showl cs
+       | oc <= 10  = showLitChar c . showl cs
+       | oc <= 12  = showString "\\0" . shows oc . showl cs
+       | oc <= 13  = showLitChar c . showl cs
+       | oc <= 31  = showString "\\0" . shows oc . showl cs
+       | oc <= 126 = showLitChar c . showl cs
+       | otherwise = showString "\\" . shows oc . showl cs
+       where oc = ord c
+      showl (SearchChar f1 f2 f3 f4:cs) = 
+        either showString showLitChar (scToChar f1 f2 f3 f4) . showl cs
+  
+      showFreel [] = showString "]"
+      showFreel [c] = showString (show c) . showString "]"
+      showFreel (c:cs)   = showString (show c++",") . showFreel cs
+      
+      isFreeChar (SearchChar f1 f2 f3 f4) = 
+        Prelude.any ((Prelude.== Branching) . consKind) [f1,f2,f3,f4] 
+      isFreeChar _              = False
+
+protectEsc p f             = f . cont
+ where cont s@(c:_) | p c  = "\\&" ++ s
+       cont s              = s
+
+asciiTab = zip ['\NUL'..' ']
+	   ["NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL",
+	    "BS",  "HT",  "LF",  "VT",  "FF",  "CR",  "SO",  "SI",
+	    "DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB",
+	    "CAN", "EM",  "SUB", "ESC", "FS",  "GS",  "RS",  "US",
+	    "SP"]
+
+instance Show C_Nat where
+  showsPrec d x | isFreeNat x = showsPrecNat d x
+                | otherwise   = showsPrec d (fromCurry x::Integer)
+
+
+isFreeNat :: C_Nat -> Bool
+isFreeNat (C_NatOr _ _)    = True
+isFreeNat C_IHi            = False
+isFreeNat (C_I n)          = isFreeNat n
+isFreeNat (C_O n)          = isFreeNat n
+
+showsPrecNat :: Int -> C_Nat -> ShowS
+showsPrecNat _ C_IHi = Prelude.showString((:)('I')((:)('H')((:)('i')([]))))
+showsPrecNat d (C_O x1) = Prelude.showParen((Prelude.>)(d)(Prelude.fromInteger((10))))(showStr)
+ where
+  showStr  = (Prelude..)(Prelude.showString((:)('O')((:)(' ')([]))))(showsPrecNat(Prelude.fromInteger((11)))(x1))
+
+showsPrecNat d (C_I x1) = Prelude.showParen((Prelude.>)(d)(Prelude.fromInteger((10))))(showStr)
+ where
+  showStr  = (Prelude..)(Prelude.showString((:)('I')((:)(' ')([]))))(showsPrecNat(Prelude.fromInteger((11)))(x1))
+
+showsPrecNat _ (C_NatOr i _) = Prelude.showString((:)('_')(Prelude.show(deref i)))
+
+instance Show C_Int where
+  showsPrec _ C_Zero = showChar '0'
+  showsPrec d x@(C_Pos n) 
+    | isFreeNat n = showParen (d>10) (showString "Pos " . showsPrecNat 11 n)
+    | otherwise   = showsPrec d (fromCurry x::Integer)
+  showsPrec d x@(C_Neg n) 
+    | isFreeNat n = showParen (d>10) (showString "Neg " . showsPrecNat 11 n)
+    | otherwise   = showsPrec d (fromCurry x::Integer)
+  showsPrec _ (C_IntOr i _) = showChar '_' . shows (deref i)
+
+-----------------------------------------------------------------
+-- external Read instances
+-----------------------------------------------------------------
+
+instance Read C_Four where
+  readsPrec _ _ = error "I won't read four"
+
+instance (Read t0) => Read (IOVal t0) where
+  readsPrec d r = readParen (d>10) 
+    (\ r -> [ (IOVal x1,r1) | (_,r0) <- readQualified "Prelude" "IOVal" r, 
+                              (x1,r1) <- readsPrec 11 r0]) r
+
+instance Read (IO (IOVal a)) where
+  readsPrec = error "no reading IO"
+
+instance Read (C_IO a) where
+  readsPrec = error "no reading IO"
+
+instance Read C_Success where
+  readsPrec d r = Prelude.readParen(Prelude.False)
+                  (\ r -> [(,)(C_Success)(r0) | 
+                           (_,r0) <- readQualified "Prelude" "Success" r])(r)
+
+instance Read a => Read (Prim a) where
+  readsPrec p s = map (\(x,y) -> (PrimValue x,y)) (readsPrec p s)
+
+instance Read a => Read (List a) where
+    readsPrec p = map (\ (x,y) -> (fromHaskellList x,y)) . readsPrec p
+
+instance Read C_Char where
+  readsPrec p s = map (\ (x,y) -> (toCurry x,y))
+                      (((readsPrec p)::ReadS Char) s)
+
+  readList s = map (\ (x,y) -> (map toCurry x,y))
+                      ((readList::ReadS String) s)
+
+instance Read (a->b) where
+  readsPrec = error "reading FUNCTION"
+
+instance Read C_Nat where
+  readsPrec d r =  
+       readParen False  (\ r -> [(C_IHi,r0)  | (_ ,r0) <- readQualified "Prelude" "IHi" r]) r
+    ++ readParen (d>10) (\ r -> [(C_O x1,r1) | (_ ,r0) <- readQualified "Prelude" "O"   r, 
+                                               (x1,r1) <- readsPrec 11 r0]) r
+    ++ readParen (d>10) (\ r -> [(C_I x1,r1) | (_ ,r0) <- readQualified "Prelude" "I"   r, 
+                                               (x1,r1) <- readsPrec 11 r0]) r
+    ++ [(toCurry i,r0) | (i::Integer,r0) <- reads r]
+
+instance Read C_Int where
+  readsPrec d r = 
+       readParen (d>10) (\ r -> [(C_Neg x1,r1)  | (_ ,r0) <- readQualified "Prelude" "Neg" r, 
+                                                  (x1,r1) <- readsPrec 11 r0]) r
+    ++ readParen False  (\ r -> [(C_Zero,r0)    | (_ ,r0) <- readQualified "Prelude" "Zero" r]) r 
+    ++ readParen (d>10) (\ r -> [(C_Pos x1,r1)  | (_ ,r0) <- readQualified "Prelude" "Pos" r,
+                                                  (x1,r1) <- readsPrec 11 r0]) r
+    ++ [(toCurry i,r0) | (i::Integer,r0) <- reads r]
+
+
+-----------------------------------------------------------------
+-- external BaseCurry instances
+-----------------------------------------------------------------
+
+instance (BaseCurry t0) => BaseCurry (IOVal t0) where
+  nf f (IOVal x1) state0 = nfCTC(\ v1 state1 -> f(IOVal(v1)) (state1))(x1) (state0)
+  nf f x state = f(x) (state)
+
+  gnf f (IOVal x1) state0 = gnfCTC(\ v1 state1 -> f(IOVal(v1)) (state1))(x1) (state0)
+  gnf f x state = f(x) (state)
+
+  generator i    = IOVal (generator i)
+
+  failed  = IOValFail
+
+  branching r bs = IOValOr r (map preturn bs)
+
+  consKind (IOValOr _ _) = Branching
+  consKind (IOValFail _) = Failed
+  consKind _ = Val
+
+  exceptions (IOValFail x) = x
+
+  orRef (IOValOr x _) = x
+
+  branches (IOValOr _ bs) = map unsafePerformIO bs
+
+instance (BaseCurry t0) => BaseCurry (IO (IOVal t0)) where
+  nf f x state = f(x) (state)
+  gnf f x state = f(x)(state)
+
+  failed x = preturn (IOValFail x)
+
+  generator u       = preturn (generator u)
+
+  branching r bs = preturn (IOValOr r bs)
+
+  consKind x = consKind (unsafePerformIO x)
+
+  exceptions x = exceptions (unsafePerformIO x)
+
+  orRef x = orRef (unsafePerformIO x)
+
+  branches x = unsafePerformIO (x Prelude.>>= \ (IOValOr _ bs) -> preturn bs)
+
+instance (BaseCurry t0) => BaseCurry (C_IO t0) where
+  nf f x state = f(x)(state)
+  gnf f x state = f(x)(state)
+
+  generator i    = C_IO (\ _ -> generator i)
+
+  failed  = C_IOFail
+
+  branching  = C_IOOr
+
+  consKind (C_IOOr _ _) = Branching
+  consKind (C_IOFail _) = Failed
+  consKind _ = Val
+
+  exceptions (C_IOFail x) = x
+
+  orRef (C_IOOr x _) = x
+
+  branches (C_IOOr _ x) = x
+
+
+instance BaseCurry C_Char where
+  nf f (SearchChar x1 x2 x3 x4) state0 = Curry.RunTimeSystem.nfCTC(\ v1 state1 -> Curry.RunTimeSystem.nfCTC(\ v2 state2 -> Curry.RunTimeSystem.nfCTC(\ v3 state3 -> Curry.RunTimeSystem.nfCTC(\ v4 state4 -> f(SearchChar(v1)(v2)(v3)(v4))(state4))(x4)(state3))(x3)(state2))(x2)(state1))(x1)(state0)
+  nf f x store = f(x)(store)
+
+  gnf f (SearchChar x1 x2 x3 x4) state0 = Curry.RunTimeSystem.gnfCTC(\ v1 state1 -> Curry.RunTimeSystem.gnfCTC(\ v2 state2 -> Curry.RunTimeSystem.gnfCTC(\ v3 state3 -> Curry.RunTimeSystem.gnfCTC(\ v4 state4 -> f(SearchChar(v1)(v2)(v3)(v4))(state4))(x4)(state3))(x3)(state2))(x2)(state1))(x1)(state0)
+  gnf f x store = f(x)(store)
+  
+
+  consKind (C_CharOr _ _) = Branching
+  consKind (C_CharFail _) = Failed
+  consKind _ = Val
+
+  generator i = withRef ( \r -> SearchChar (generator r) 
+                                           (generator (r+1)) 
+                                           (generator (r+2)) 
+                                           (generator (r+3))) 3
+
+  orRef      (C_CharOr x _) = x
+  branches   (C_CharOr _ x) = x
+
+  failed = C_CharFail
+
+  exceptions (C_CharFail x) = x
+
+  branching  = C_CharOr
+
+
+instance Generate a => BaseCurry (Prim a) where
+  nf f x store = f(x)(store)
+
+  gnf f x store = f(x)(store)
+
+  generator i    = gen genFree 
+    where
+      gen f = let max = maxArity (head (f 0)) in
+        withRef (\r -> PrimOr (mkRef r max i)
+                              (map PrimValue (f r)))
+                max
+
+  failed = PrimFail
+  branching = PrimOr
+
+  consKind (PrimOr _ _) = Branching
+  consKind (PrimFail _) = Failed
+  consKind _ = Val
+
+  exceptions (PrimFail x) = x
+
+  orRef (PrimOr x _) = x
+
+  branches (PrimOr _ x) = x
+
+
+instance (BaseCurry t0) => BaseCurry (List t0) where
+  nf f ((:<) x1 x2) state0 = Curry.RunTimeSystem.nfCTC(\ v1 state1 -> Curry.RunTimeSystem.nfCTC(\ v2 state2 -> f((:<)(v1)(v2))(state2))(x2)(state1))(x1)(state0)
+  nf f x st = f(x)(st)
+
+  gnf f ((:<) x1 x2) state0 = Curry.RunTimeSystem.gnfCTC(\ v1 state1 -> Curry.RunTimeSystem.gnfCTC(\ v2 state2 -> f((:<)(v1)(v2))(state2))(x2)(state1))(x1)(state0)
+  gnf f x st = f(x)(st)
+
+  generator i = withRef (\ r -> ListOr (mkRef r 2 i) 
+                        ([List,(:<)(generator(r+1))(generator(r+2))])) 2
+
+  failed  = ListFail
+
+  branching  = ListOr
+
+  consKind (ListOr _ _) = Curry.RunTimeSystem.Branching
+  consKind (ListFail _) = Curry.RunTimeSystem.Failed
+  consKind _ = Curry.RunTimeSystem.Val
+
+  exceptions (ListFail x) = x
+
+  orRef (ListOr x _) = x
+
+  branches (ListOr _ x) = x
+
+
+-----------------------------------------------------------------
+-- converting between curry and haskell
+-----------------------------------------------------------------
+
+-- In Order to integrate Haskell functions we sometimes 
+-- need to convert values.
+-- (Do we really need both directions? Or rather convert a b for both?)
+class ConvertCH a b where
+  fromCurry :: a -> b
+  fromCurry = error "fromCurry"
+  toCurry :: b -> a
+  toCurry = error "toCurry"
+
+instance ConvertCH C_Bool Bool where
+  fromCurry C_True  = True
+  fromCurry C_False = False
+
+  toCurry True  = C_True
+  toCurry False = C_False
+
+isC_True C_True = True
+isC_True _      = False
+
+instance ConvertCH C_Char Char where
+  fromCurry (C_Char c) = c
+  fromCurry (SearchChar f0 f1 f2 f3) = 
+    either (error "convert to char") id (scToChar f0 f1 f2 f3)
+  toCurry c = C_Char c
+
+instance (ConvertCH a b) => ConvertCH (List a) [b] where
+  fromCurry List = []
+  fromCurry (x :< xs) = fromCurry x : fromCurry xs
+  fromCurry (ListOr _ _) = error "or list"
+
+  toCurry [] = List
+  toCurry (x:xs) = toCurry x :< toCurry xs
+
+-- sometimes you need conversion of lists without converting the elements
+-- eg Searchtree, Show instance
+
+toHaskellList :: List a -> [a]
+toHaskellList List = []
+toHaskellList (x :< xs) = x : toHaskellList xs
+
+fromHaskellList :: [a] -> List a
+fromHaskellList [] = List
+fromHaskellList (x : xs) = x :< fromHaskellList xs
+
+-- specify result type of toCurry "..." for code generation
+fromHaskellString :: String -> List C_Char
+fromHaskellString = toCurry
+
+instance ConvertCH C_Int Integer where
+  fromCurry C_Zero    = 0
+  fromCurry (C_Pos i) = fromCurry i
+  fromCurry (C_Neg i) = negate (fromCurry i)
+
+  toCurry n = case compare n 0 of
+   LT -> C_Neg (toCurry (abs n))
+   EQ -> C_Zero
+   GT -> C_Pos (toCurry (abs n))
+
+instance ConvertCH C_Nat Integer where
+  fromCurry (C_I bs) = 2 Prelude.* fromCurry bs Prelude.+ 1
+  fromCurry (C_O bs) = 2 Prelude.* fromCurry bs
+  fromCurry C_IHi    = 1
+
+  toCurry n = case mod n 2 of
+                1 -> if m Prelude.== 0 then C_IHi else C_I (toCurry m)
+                0 -> C_O (toCurry m)
+    where m = Prelude.div n 2
+
+
+instance ConvertCH C_Int Int where
+  fromCurry c = fromInteger (fromCurry c)
+  toCurry i   = toCurry (toInteger i)
+
+instance ConvertCH (Prim a) a where
+  toCurry = PrimValue 
+  fromCurry (PrimValue x) = x
+
+-------------------------------------------------------------
+-- basic functions used in instances of class GenericCurry
+-------------------------------------------------------------
+-- obscure names come from the standard operator 
+-- renaming scheme of the compiler.
+
+-- implementation of concurrent (&)
+-- no other implementation
+-- basic concept: if one value suspends evaluate the other 
+-- TODO: include state information!
+concAnd :: StrEqResult -> StrEqResult -> Result StrEqResult
+concAnd C_True y _ = y
+concAnd x@(C_BoolOr _ _) y st = maySwitch y x st
+--concAnd (C_BoolOr r xs) y = C_BoolOr r (map (flip concAnd y) xs)
+concAnd x@(C_BoolFail _) _ _ = x
+concAnd x@C_False _ _ = x
+
+maySwitch :: StrEqResult -> StrEqResult -> Result StrEqResult
+maySwitch C_True x _ = x
+maySwitch y@(C_BoolOr _ _) (C_BoolOr r xs) st = 
+             C_BoolOr r (map (\ x -> concAnd y x st) xs)
+maySwitch x@(C_BoolFail _) _ _ = x
+maySwitch x@C_False _ _ = x
+{-
+startBreadth :: [StrEqResult] -> Result StrEqResult
+startBreadth cs st = onLists st [] cs
+
+instance Eq C_Bool where
+  C_True == C_True = True
+  C_False == C_False = True
+  _ == _ = False
+
+allSame :: Eq a => [a] -> Bool
+allSame []     = True
+allSame (x:xs) = all (x==) xs
+
+onLists :: Store -> [StrEqResult] -> [StrEqResult] -> StrEqResult
+onLists _ []  []      = strEqSuccess
+onLists _ _   (x@(C_BoolFail _):_) = x
+onLists _ _   (C_False:_)   = C_False
+onLists st ors (C_True:xs) = onLists st ors xs
+onLists st ors (C_BoolAnd xs:ys) = onLists st ors (xs++ys)
+onLists st ors (C_BoolOr ref xs:ys) 
+  | isChain ref = chain (\ x st -> onLists st ors (x:ys)) ref xs st
+  | otherwise   = case fromStore ref st of
+  Nothing -> onLists st (insertOr ref xs ors) ys
+  Just i  -> onLists st ors (xs!!i : ys)
+onLists st (C_BoolOr ref xs:ors) [] = 
+  let inBranch i x = maybe (failed $ curryError "onLists")
+                           (\st -> onLists st ors [x])
+                           (addToStore ref i st)
+  in  C_BoolOr ref (zipWith inBranch [0..] xs)
+
+insertOr ref xs [] = [C_BoolOr ref xs]
+insertOr ref xs (o@(C_BoolOr ref2 xs2):ys) 
+  | ref==ref2 = C_BoolOr ref (zipWith insertAnd xs xs2) : ys
+  | otherwise = o : insertOr ref xs ys
+
+insertAnd C_True           y       	    = y
+insertAnd C_False          _       	    = C_False
+insertAnd x@(C_BoolFail _) _       	    = x
+insertAnd x                C_True  	    = x
+insertAnd _                C_False 	    = C_False
+insertAnd _                x@(C_BoolFail _) = x
+insertAnd o1@(C_BoolOr ref1 xs1) o2@(C_BoolOr ref2 xs2) 
+  | ref1 == ref2 = C_BoolOr ref1 (zipWith insertAnd xs1 xs2)
+  | otherwise    = C_BoolAnd [o1,o2]
+insertAnd o@(C_BoolOr _ _) (C_BoolAnd ys)   = C_BoolAnd (o:ys)
+insertAnd (C_BoolAnd ys)   o@(C_BoolOr _ _) = C_BoolAnd (o:ys)
+insertAnd (C_BoolAnd xs)   (C_BoolAnd ys)   = C_BoolAnd (xs++ys)
+-}
+--- implementation of (==)
+--- no other implementation
+genEq :: Curry t0 => t0 -> t0 -> Result C_Bool
+genEq x y = ghnfCTC (\x'-> ghnfCTC (eq x') y) x
+
+--- implementation of (=:=)
+--- no other implementation
+--- TODO: use state information
+genStrEq :: Curry t0 => t0 -> t0 -> Result StrEqResult
+genStrEq a b = (\ a' -> (onceMore a') `hnfCTC` b)  `hnfCTC` a
+  where
+    onceMore a' b' = (\ a'' -> unify a'' b') `hnfCTC` a'
+    unify x y st = checkFree (consKind x) (consKind y)
+      where
+      checkFree Val Val = strEq x y st
+
+      checkFree Branching Branching  
+         | drx Prelude.== dry
+         = C_True
+         | otherwise = branching (equalFromTo ax bx drx ay by dry) [C_True]
+         where (ax,bx,drx)=genInfo (orRef x)
+               (ay,by,dry)=genInfo (orRef y)
+
+      checkFree Branching _ = 
+        hnfCTC (\ x' -> unify x' y) 
+               (branching (narrowOrRef (orRef x)) (branches x)) st
+
+      checkFree _ Branching = 
+        hnfCTC (unify x)
+               (branching (narrowOrRef (orRef y)) (branches y)) st
+
+      checkFree x   y   = error $ "checkFree " ++ show (x,y)
+
+strEqFail :: String -> StrEqResult
+strEqFail s = C_False --C_SuccessFail (ErrorCall ("(=:=) for type "++s))
+
+strEqSuccess :: StrEqResult
+strEqSuccess = C_True
+
+--hcAppend [] ys = ys
+--hcAppend (x:xs) ys = x:< hcAppend xs ys
+
+-----------------------------------------------------------------
+-- external Generate instances
+-----------------------------------------------------------------
+
+instance BaseCurry b => Generate (a -> Result b) where
+  genFree i  = mkBranches (generator i)
+  maxArity _ = 1
+
+mkBranches :: BaseCurry b => b -> [a -> Result b]
+mkBranches x = case consKind x of
+       Val       -> [const (const x)]
+       Branching -> map (const . const) (branches x)
+
+instance Generate Float where
+  genFree    = error "free variable of type Float"
+  maxArity _ = error "free variable of type Float"
+
+-----------------------------------------------------------------
+-- external Curry instances
+-----------------------------------------------------------------
+
+instance (Curry t0) => Curry (List t0) where
+  strEq List List st = strEqSuccess
+  strEq ((:<) x1 x2) ((:<) y1 y2) st = concAnd(genStrEq(x1)(y1)(st))(genStrEq(x2)(y2)(st))(st)
+  strEq _ x0 _ = strEqFail(typeName(x0))
+
+  eq List List st = C_True
+  eq ((:<) x1 x2) ((:<) y1 y2) st = op_38_38(genEq(x1)(y1)(st))(genEq(x2)(y2)(st))(st)
+  eq _ _ _ = C_False
+
+  propagate f List st = List
+  propagate f ((:<) x1 x2) st = (:<)(f 0 (x1)(st))(f 1 (x2)(st))
+
+  foldCurry f c List st = c
+  foldCurry f c ((:<) x1 x2) st = f(x1)(f(x2)(c)(st))(st)
+
+  typeName _ = "[]"
+
+  showQ  = showsPrecList (showQ 0) showQList 
+
+instance Curry C_Four where
+  strEq C_F0 C_F0 _ = strEqSuccess
+  strEq C_F1 C_F1 _ = strEqSuccess
+  strEq C_F2 C_F2 _ = strEqSuccess
+  strEq C_F3 C_F3 _ = strEqSuccess
+  strEq x0   _    _ = strEqFail(typeName(x0))
+
+  eq C_F0 C_F0 _ = C_True
+  eq C_F1 C_F1 _ = C_True
+  eq C_F2 C_F2 _ = C_True
+  eq C_F3 C_F3 _ = C_True
+  eq _    _    _ = C_False
+
+  propagate _ C_F0 _ = C_F0
+  propagate _ C_F1 _ = C_F1
+  propagate _ C_F2 _ = C_F2
+  propagate _ C_F3 _ = C_F3
+
+  foldCurry _ c C_F0 _ = c
+  foldCurry _ c C_F1 _ = c
+  foldCurry _ c C_F2 _ = c
+  foldCurry _ c C_F3 _ = c
+
+  typeName _ = "Four"
+
+
+instance BaseCurry a => Curry (IO (IOVal a)) where 
+  strEq x y = error "IO.strEq"
+
+  eq _ _ = error "IO.eq"
+
+  propagate _ _ = error "propagate IOVal"
+
+  foldCurry _ _ _ = error "foldCurry IOVal"
+
+  typeName _ = "IOVal"
+
+  --toC_Term _ _ _ = error "IO.toC_Term"
+  --fromC_Term _   = error "IO.fromC_Term"
+
+
+instance BaseCurry a => Curry (C_IO a) where
+  strEq _ _ = error "strEq IO"
+
+  eq _ _ = error "eq IO"
+
+  --subst store x = x
+
+  propagate _ _ = error "propagate IO"
+
+  foldCurry _ _ _ = error "foldCurry IO"
+
+  typeName _ = "IO"
+
+  --toC_Term _ _ (C_IOFreeVar r) = C_Free(C_Int(Prelude.toInteger(r)))
+  --toC_Term _ _ _ = C_Data (C_Int 1) (toCurry "IO") List
+
+  --fromC_Term (C_Free (C_Int r)) = C_IOFreeVar(Prelude.fromInteger(r))
+  --fromC_Term _ = error "no converting IO"
+
+instance Curry C_Char where
+  strEq x@(C_Char c1) (C_Char c2) _
+    | c1 Prelude.== c2 = C_True
+  strEq c1@(SearchChar _ _ _ _) (C_Char c2) st = strEq c1 (charToSc c2) st 
+  strEq (C_Char c1) c2@(SearchChar _ _ _ _) st = strEq (charToSc c1) c2 st 
+  strEq (SearchChar x1 x2 x3 x4) (SearchChar y1 y2 y3 y4) st = concAnd (genEq(x1)(y1)st)(concAnd(genStrEq(x2)(y2)st)(concAnd(genStrEq(x3)(y3)st)(genStrEq(x4)(y4)st)st)st)st
+  strEq _ x _ = strEqFail (typeName x)
+
+
+  eq (C_Char x1) (C_Char y1)             _  = toCurry (x1 Prelude.== y1)
+  eq c1@(SearchChar _ _ _ _) (C_Char c2) st = eq c1 (charToSc c2) st
+  eq (C_Char c1) c2@(SearchChar _ _ _ _) st = eq (charToSc c1) c2 st
+  eq (SearchChar x1 x2 x3 x4) (SearchChar y1 y2 y3 y4) st = op_38_38 (genEq (x1)(y1)st) (op_38_38 (genEq(x2)(y2)st) (op_38_38(genEq(x3)(y3)st)(genEq(x4)(y4)st)st)st)st
+  eq _ _ _ = C_False
+
+  propagate _ c@(C_Char _) _ = c
+  propagate f (SearchChar f0 f1 f2 f3) st = 
+    SearchChar (f 0 f0 st) (f 1 f1 st) (f 2 f2 st) (f 3 f3 st)
+
+  foldCurry _ c (C_Char _) _ = c
+  foldCurry f c (SearchChar f0 f1 f2 f3) st = f f0 (f f1 (f f2 (f f3 c st)st)st)st
+
+  typeName _ = "Char"
+
+  showQList = showList  
+
+  --toC_Term _ _ (C_Char c) = C_Data (C_Int (toInteger (ord c))) (toCurry (show c)) List
+  --toC_Term _ _ (C_CharFreeVar r) = C_Free(C_Int(Prelude.toInteger(r)))
+
+  --fromC_Term (C_Data (C_Int (i::Integer)) _ List) = C_Char (chr (fromInteger i))
+  --fromC_Term (C_Data (C_IntFreeVar _) name List) = C_Char (read (fromCurry name))
+  --fromC_Term (C_Free (C_Int r)) = C_CharFreeVar(Prelude.fromInteger(r))
+
+
+instance (Generate a,Show a,Read a,Eq a) => Curry (Prim a) where
+  strEq x@(PrimValue v1) (PrimValue v2) _
+    | v1 Prelude.== v2 = C_True --C_Success
+    | otherwise = strEqFail (typeName x)
+
+  eq (PrimValue v1) (PrimValue v2) _ = toCurry (v1 Prelude.== v2)
+
+  propagate _ (PrimValue v1) _ = PrimValue v1
+
+  foldCurry _ c (PrimValue _) _ = c
+
+  --toC_Term _ _ (PrimValue x1) = let sx = show x1 in
+  --    C_Data (C_Int (string2int sx)) (toCurry sx) List
+  --toC_Term _ _ (PrimFreeVar r) = C_Free(C_Int(Prelude.toInteger(r)))
+
+  --fromC_Term (C_Data _ name List) = PrimValue (read (fromCurry name))
+  --fromC_Term (C_Free (C_Int r)) = PrimFreeVar(Prelude.fromInteger(r))
+ 
+  typeName _ = "Prim"
+
+
+
+-----------------------------------------------------------------
+-- external Curry instances
+-----------------------------------------------------------------
+
+instance Eq (a->b) where
+  (==) = error "comparing FUNCTION"
+
+
+
+
+
+infix  4 ===
+infixr 0 & 
+
+-----------------------------------------------------------------------
+-- IO starter
+-----------------------------------------------------------------------
+
+preturn = Prelude.return
+
+optChangeStore :: a -> (b -> Store -> a) -> ((Int -> Store) -> a) 
+               -> OrRef -> Branches b -> Store -> a
+optChangeStore err det br = 
+  manipulateStore err det (\ _ -> br) (\ _ -> det)
+
+curryIO :: Curry a => (Result (C_IO a)) -> IO a
+curryIO x = let st = emptyStore in ioStart st (x st)
+
+curryIOVoid :: Curry a => (Result (C_IO a)) -> IO ()
+curryIOVoid x = curryIO x >> Prelude.return ()
+
+ioStart :: Curry a => Store -> C_IO a -> IO a
+ioStart st (C_IO act)            = act st Prelude.>>= curryDo st
+ioStart _  (C_IOFail es)         = printExceptions es
+ioStart st (C_IOOr ref bs)       =
+  optChangeStore 
+    (printExceptions (curryError "ioStart"))
+    (flip ioStart)
+    (\st -> searchValC_IO [] (zipWith (mkChoice st) [0..] bs))
+    ref 
+    bs 
+    st
+
+curryDo :: Curry a => Store -> IOVal a -> IO a
+curryDo _  (IOVal x)        = Prelude.return x
+curryDo _  (IOValFail es)   = printExceptions es
+curryDo st (IOValOr ref bs) =     
+  optChangeStore 
+    (printExceptions (curryError "curryDo")) 
+    (\ x st -> x Prelude.>>= curryDo st)
+    (\st -> searchIOVal [] (zipWith (mkChoice st) [0..] bs))
+    ref 
+    bs
+    st
+
+mkChoice :: BaseCurry a => (Int -> Store) -> Int -> a -> (Store,a)
+mkChoice st i x = (st i,x)
+
+searchValC_IO :: Curry a => [C_Exceptions] -> [(Store,C_IO a)] -> IO a
+searchValC_IO es []     = 
+  mapM_ printException es >> error "no solution in branching io value"
+searchValC_IO _ ((st,C_IO act)   : _)  = act st Prelude.>>= curryDo st
+searchValC_IO es ((_ ,C_IOFail e@(ErrorCall _)) : xs) = 
+  searchValC_IO (e:es) xs
+searchValC_IO es ((_ ,C_IOFail e) : xs) = searchValC_IO es xs
+searchValC_IO es ((st,C_IOOr ref bs) : xs) =  
+  optChangeStore
+    (searchValC_IO es xs)
+    (\ x st -> case x of
+        C_IO act   -> act st Prelude.>>= curryDo st
+        C_IOOr _ _ -> searchValC_IO es ((st,x):xs)
+        C_IOFail _ -> searchValC_IO es xs)
+    -- switch arguments of (++) for breadth first (bad.), cf. also below
+    (\ st -> searchValC_IO es (zipWith (mkChoice st) [0..] bs ++ xs))
+    ref bs st
+
+searchIOVal :: Curry a => [C_Exceptions] -> [(Store,IO (IOVal a))] -> IO a
+searchIOVal es []                = 
+  mapM_ printException es >> error "no solution in branching io value"
+searchIOVal es ((st,act) : stacts) = do
+  x <- act
+  case x of
+    IOVal a        -> Prelude.return a
+    IOValFail e@(ErrorCall _) -> searchIOVal (e:es) stacts
+    IOValFail _    -> searchIOVal es stacts
+      -- switch arguments of (++) for breadth first (bad.)
+    IOValOr ref bs -> 
+      optChangeStore 
+        (searchIOVal (curryError "inconsistent Store":es) stacts)
+        (\ x st -> searchIOVal es ((st,x):stacts))
+        (\st -> searchIOVal es (zipWith (mkChoice st) [0..] bs ++ stacts))
+        ref bs st
+
+-- this is the place to change for implicit breadth first search
+searchVal :: (Store -> a -> b) -> Store -> OrRef -> Branches a -> b
+searchVal cont store ref [] =  error "top io failed"
+searchVal cont store ref (x:bs) = cont store x
+
+printException :: C_Exceptions -> IO ()
+printException (PatternMatchFail s) = 
+  hPutStrLn stderr ("non-exhaustive patterns in function "++s)
+printException (AssertionFailed s) = 
+  hPutStrLn stderr ("assertion failed with label "++s)
+printException (IOException s) = 
+  hPutStrLn stderr ("io exception: " ++ s)
+printException (ErrorCall s) = 
+  hPutStrLn stderr ("error : " ++s)
+printException PreludeFailed = hPutStrLn stderr "Prelude.failed"
+
+printExceptions :: C_Exceptions -> IO a
+printExceptions e = 
+  printException e >> error "program error"
+
+-----------------------------------------------------------------------
+-- Int and Float
+-----------------------------------------------------------------------
+
+
+instance Eq C_Int where
+  x == y = (fromCurry x::Integer) Prelude.== fromCurry y
+
+instance Num C_Int where
+  fromInteger x = toCurry x
+  x + y = toCurry ((fromCurry x::Integer) + fromCurry y)
+  x * y = toCurry ((fromCurry x::Integer) * fromCurry y)
+  
+  abs (C_Neg x) = C_Pos x
+  abs x = x
+
+  signum (C_Pos _) = C_Pos C_IHi
+  signum (C_Neg _) = C_Neg C_IHi
+  signum x = x
+
+instance Eq a => Eq (Prim a) where
+  (PrimValue x) == (PrimValue y) = x Prelude.== y
+
+instance (Num a) => Num (Prim a) where
+  (PrimValue x) + (PrimValue y) = PrimValue (x+y)
+  (PrimValue x) - (PrimValue y) = PrimValue (x-y)
+  (PrimValue x) * (PrimValue y) = PrimValue (x*y)
+  negate (PrimValue x) = PrimValue (negate x)
+  abs    (PrimValue x) = PrimValue (abs x)
+  signum (PrimValue x) = PrimValue (signum x)
+  fromInteger x = PrimValue (fromInteger x)
+
+instance Enum a => Enum (Prim a) where 
+    toEnum i = PrimValue (toEnum i)
+    fromEnum (PrimValue x) = fromEnum x
+
+instance Real a => Real (Prim a) where 
+    toRational (PrimValue x) = toRational x
+
+instance Integral a => Integral (Prim a) where 
+    quotRem (PrimValue x) (PrimValue y) = let (x',y') = quotRem x y in 
+                                           (PrimValue x', PrimValue y')
+    toInteger (PrimValue x) = toInteger x
+
+instance Ord a => Ord (Prim a) where
+   (PrimValue x) <= (PrimValue y) = x<=y
+
+-----------------------------------------------------------------------
+-- T0 is unit (), needed for IO primitives
+-----------------------------------------------------------------------
+
+instance ConvertCH T0 () where
+  toCurry () = T0
+  fromCurry T0 = () 
+
+instance (ConvertCH a ha, ConvertCH b hb) => ConvertCH (T2 a b) (ha,hb) where
+  toCurry (x,y) = T2 (toCurry x) (toCurry y)
+  fromCurry (T2 x y) = (fromCurry x, fromCurry y) 
+
+instance (ConvertCH a ha, ConvertCH b hb, ConvertCH c hc) =>
+         ConvertCH (T3 a b c) (ha,hb,hc) where
+  toCurry (x,y,z) = T3 (toCurry x) (toCurry y) (toCurry z)
+  fromCurry (T3 x y z) = (fromCurry x, fromCurry y, fromCurry z) 
+
+-----------------------------------------------------------------------
+-- Maybe
+-----------------------------------------------------------------------
+
+instance (ConvertCH a b) => ConvertCH (C_Maybe a) (Maybe b) where
+  fromCurry C_Nothing  = Nothing
+  fromCurry (C_Just x) = Just (fromCurry x)
+
+  toCurry Nothing  = C_Nothing
+  toCurry (Just x) = C_Just (toCurry x)
+
+
+---------------------------------------------------------------------------------
+-- external functions for Prelude
+---------------------------------------------------------------------------------
+
+($#) :: (Curry a, Curry b) => Prim (a -> Result b) -> a -> Result b
+($#) cont x = prepApply ghnfCTC x cont 
+
+($!) :: (Curry a,Curry b) => Prim (a -> Result b) -> a -> Result b
+($!) cont x = prepApply hnfCTC x cont
+
+($!!) :: (Curry a, Curry b) => Prim (a -> Result b) -> a -> Result b
+($!!) cont x = prepApply nfCTC x cont
+
+($##) :: (Curry a, Curry b) => Prim (a -> Result b) -> a -> Result b
+($##) cont x = prepApply gnfCTC x cont
+
+prim_error :: Curry a => C_String -> Result a
+prim_error s _ = Curry.RunTimeSystem.failed (ErrorCall (fromCurry s))
+
+failed :: Curry a => Result a
+failed _ = Curry.RunTimeSystem.failed PreludeFailed 
+
+(==) :: Curry a => a -> a -> Result C_Bool
+(==) = genEq 
+
+prim_ord :: C_Char -> Result C_Int
+prim_ord cc _ = toCurry (ord (fromCurry cc))
+
+prim_chr :: C_Int -> Result C_Char
+prim_chr ci _ = toCurry (chr (fromCurry ci))
+
+(===) :: Curry a => a -> a -> Result C_Bool --C_Success
+(===) = genStrEq
+ 
+prim_negateFloat :: C_Float -> Result C_Float
+prim_negateFloat x _ = negate x
+
+success :: C_Success
+success = C_Success
+
+--concAnd' x y st = startBreadth [x,y] st
+
+(&) :: C_Success -> C_Success -> Result C_Success
+ -- (&) x y st = boolToSuccess (concAnd' (successToBool x) (successToBool y) st)
+(&) x y st = boolToSuccess 
+               (concAnd (successToBool x st) 
+                        (successToBool y st) st) st
+
+boolToSuccess C_True            _  = C_Success
+boolToSuccess C_False           _  = C_SuccessFail (ErrorCall "&")
+boolToSuccess (C_BoolFail e)    _  = C_SuccessFail e
+boolToSuccess (C_BoolOr r xs)   st = mapOr boolToSuccess r xs st
+
+
+successToBool :: C_Success -> Result C_Bool
+successToBool C_Success                _  = C_True
+successToBool (C_SuccessFail e)        _  = C_BoolFail e
+successToBool (C_SuccessOr r xs)       st = mapOr successToBool r xs st
+
+--andBreadth :: List C_Bool -> Result C_Bool
+--andBreadth xs st = startBreadth (toHaskellList xs) st
+
+-- TODO: C_IO without State??? also other io-functions.
+(>>=) :: (Curry a,Curry b) => C_IO a -> Prim (a -> Result (C_IO b)) -> Result (C_IO b)
+(>>=) m f _ = C_IO (hnfCTC (exec f) m)
+
+exec :: (Curry a,Curry b) => Prim (a -> Result (C_IO b)) -> C_IO a -> Result (IO (IOVal b))
+exec f (C_IO m) st = m st Prelude.>>= \ x -> prim_do f x st
+
+-- if it wasn't io, we could just write 
+--exec f st (C_IO m) = m st Prelude.>>= hnfCTC (fromIOVal f) st
+-- with fromIOVal simply being
+--fromIOVal::(Curry a,Curry b)=>Prim(a->C_IO b)->State->IOVal a->IO(IOVal b)
+--fromIOVal f st (IOVal res) = hnfCTC exec2 st (apply f res)
+-- and everything would work fine. But then for the susp and or cases
+-- we would use unsafe io...
+-- Thus, prim_do has to copy the code of ctcStore False
+-- IMPORTANT: This code should correspond to BaseCurry.RunTimeSystem.ctcStore
+
+prim_do ::  (Curry a,Curry b) => 
+            Prim (a -> Result (C_IO b)) -> IOVal a ->  Result (IO (IOVal b))
+prim_do f x state = case x of
+  IOVal res      -> hnfCTC exec2 (apply f res state) state
+  IOValFail es   -> Prelude.return (IOValFail es)
+  IOValOr ref bs -> 
+    optChangeStore
+       (Curry.RunTimeSystem.failed $ curryError "prim_do")
+       (\ x st -> x Prelude.>>= \ x' -> prim_do f x' st)
+       (\ st -> Prelude.return (IOValOr ref 
+                  (zipWith (\ i x -> x Prelude.>>= \ x' -> cont x' (st i)) 
+                           [0..] bs)))
+       ref bs state
+  where
+    cont x st = prim_do f x st
+
+exec2 :: C_IO b -> Result (IO (IOVal b))
+exec2 (C_IO f) = f 
+
+
+return :: a -> Result (C_IO a)
+return a _ = C_IO (\ _ -> Prelude.return (IOVal a))
+
+prim_putChar :: C_Char -> Result (C_IO T0)
+prim_putChar = ioFunc1 putChar 
+
+getChar :: Result (C_IO C_Char)
+getChar = ioFunc0 Prelude.getChar
+ 
+prim_readFile :: C_String -> Result (C_IO C_String)
+prim_readFile = ioFunc1 readFile 
+
+prim_writeFile :: C_String -> C_String -> Result (C_IO T0)
+prim_writeFile = ioFunc2 writeFile 
+
+prim_appendFile :: C_String -> C_String -> Result (C_IO T0)
+prim_appendFile = ioFunc2 appendFile 
+
+catchFail :: Curry a => C_IO a -> C_IO a -> Result (C_IO a)
+catchFail (C_IO act) err _ = 
+  C_IO (\ st -> catch (act st) (const (hnfCTC exec2 err st)))
+catchFail (C_IOFail _) err _ = err
+catchFail (C_IOOr ref bs) err st =
+  optChangeStore 
+    err
+    (flip catchFail err)
+    (\st -> searchValCatch (zipWith (mkChoice st) [0..] bs) err)
+    ref bs st
+
+searchValCatch :: Curry a => [(Store,C_IO a)] -> C_IO a -> C_IO a
+searchValCatch []     err = err
+searchValCatch ((st,C_IO act)   : _)  err = catchFail (C_IO act) err st
+searchValCatch ((_ ,C_IOFail _) : xs) err = searchValCatch xs err
+searchValCatch ((st,C_IOOr ref bs) : xs)  err =  
+  optChangeStore 
+    (searchValCatch xs err)
+    (\ x st -> catchFail x err st)
+    (\ st -> searchValCatch (zipWith (mkChoice st) [0..] bs ++ xs) err)
+    ref bs st
+
+
+
+
+
+prim_show :: (Show a,Curry a) => a -> Result C_String
+prim_show x _ = toCurry (show x)
+
+getSearchTree :: Curry a => a -> Result (C_IO (C_SearchTree a))
+getSearchTree x _ = C_IO (\ state -> Prelude.return (IOVal (searchTr x state)))
+
+ 
+searchTr :: Curry a => a -> Result (C_SearchTree a)
+searchTr x state = transVal (nfCTC (nfCTC const) x state)
+  where
+    transVal x = case consKind x of
+                   Val       -> C_Value x
+                   Failed    -> C_Fail
+                   Branching 
+                     | isGenerator (orRef x) -> C_Value x
+                     | otherwise -> transBranching (branches x)
+
+    transBranching []         = C_Fail
+    transBranching [x]        = transVal x
+    transBranching xs@(_:_:_) = C_Choice (fromHaskellList (map transVal xs))
+
+{-
+toData :: Curry a => a -> Result C_Data
+toData _ st = prim_error (toCurry "toData not implemented") st --ctcStore True (toC_Term True) Nothing
+
+
+toNumData :: Curry a => a -> Result C_NumData
+toNumData _ st = prim_error (toCurry "toNumData not implemented") st
+  --ctcStore True (\ store x -> (conv2num (toC_Term True store x))) Nothing
+
+
+
+cmap _ List = List
+cmap f (x :< xs) = f x :< cmap f xs
+
+fromData :: Curry a => C_Data -> Result a
+fromData _ st = prim_error (toCurry "fromData not implemented") st --fromC_Term
+-}
+
+prepApply :: (BaseCurry a,BaseCurry b) => 
+  ((b -> Result a) -> b -> Result a) -> b -> (Prim (b -> Result a)) -> Result a
+prepApply  prep x (PrimValue f)     st = prep f x st
+prepApply  prep x (PrimOr r bs)     st = mapOr (prepApply prep x) r bs st
+prepApply  _    _  cont             _  = patternFail "Prelude.prepApply" cont
+
+--apply :: (Curry b, Curry (Prim (a -> b))) => Prim (a -> b) -> a -> b
+apply (PrimValue f)     x st = f x st
+apply (PrimOr r bs)     x st = mapOr (\ f -> apply f x) r bs st
+apply cont              _ st = patternFail "Prelude.apply" cont
+
+-- these functions are employed for higher order
+pf :: Curry b => (a -> Result b) -> Prim (a -> Result b)
+pf = PrimValue 
+
+pc :: Curry b => (a -> b) -> (Prim (a -> Result b))
+pc f = PrimValue (\ x _  -> f x)
+
+pa :: Curry c => (a -> Prim (b -> Result c)) -> Prim (a -> Result (Prim (b -> Result c)))
+pa f = PrimValue (\ x _  -> f x)
+
+cp :: (b -> c) -> (a -> b) -> a -> c
+cp f g x = f (g x)
+
+
+cond :: Curry a => C_Success -> a -> Result a
+cond C_Success  x _ = x
+cond (C_SuccessOr r bs)     x st = mapOr (\ c -> cond c x) r bs st
+cond x _ _ = patternFail "Prelude.cond" x
+
+
+ifVar :: (Curry a,Curry b) => b -> a -> a -> a
+ifVar = error "ifVar not implemented"
+
+---------------------------------------------
+-- to ease connecting external functions 
+---------------------------------------------
+
+extFunc1 :: (Curry a,Curry d,ConvertCH a b,ConvertCH d c) => (b->c) -> a -> Result d
+extFunc1 f = gnfCTC (\ x' _ -> toCurry (f (fromCurry x'))) 
+
+extFunc2 :: (Curry a, Curry c,Curry f,ConvertCH a b,ConvertCH c d,ConvertCH f e) => 
+            (b->d->e) -> a -> c -> Result f
+extFunc2 f x y = 
+  gnfCTC (\x'->gnfCTC (\ y' _ -> toCurry (f (fromCurry x') (fromCurry y'))) y) x
+
+extFunc3 :: (Curry c1, Curry c2, Curry c3, Curry cv,
+             ConvertCH c1 h1,ConvertCH c2 h2,ConvertCH c3 h3,ConvertCH cv hv) => 
+            (h1->h2->h3->hv) -> c1 -> c2 -> c3 -> Result cv
+extFunc3 f x y z = 
+  gnfCTC (\x' ->
+  gnfCTC (\y' -> 
+  gnfCTC (\z' _ -> toCurry (f (fromCurry x') (fromCurry y') (fromCurry z'))) z ) y) x
+
+extFunc4 :: (Curry c1, Curry c2, Curry c3, Curry c4, Curry cv,
+             ConvertCH c1 h1,ConvertCH c2 h2,ConvertCH c3 h3,ConvertCH c4 h4,ConvertCH cv hv) => 
+            (h1->h2->h3->h4->hv) -> c1 -> c2 -> c3 -> c4 -> Result cv
+extFunc4 f x1 x2 x3 x4 = 
+  gnfCTC (\x1' ->
+  gnfCTC (\x2' -> 
+  gnfCTC (\x3' -> 
+  gnfCTC (\x4' _ -> toCurry (f (fromCurry x1') (fromCurry x2') (fromCurry x3') (fromCurry x4'))) 
+         x4) x3) x2) x1
+
+
+hnf2 :: (Curry a, Curry b,Curry c) => (a->b->c) -> a -> b -> Result c
+hnf2 f x y = hnfCTC (\ x' -> hnfCTC (\ y' _ -> f x' y') y) x
+
+ioFunc0 :: (Curry b,ConvertCH b a) => IO a -> Result (C_IO b)
+ioFunc0 iof _ = C_IO (\ _ -> iof Prelude.>>= \hv -> Prelude.return (IOVal (toCurry hv)))
+
+
+ioFunc1 :: (Curry a,Curry d,ConvertCH a b,ConvertCH d c) => (b->IO c) -> a -> Result (C_IO d)
+ioFunc1 iof x _ = C_IO (\ _ ->
+           iof (fromCurry x) Prelude.>>= \hv ->
+           Prelude.return (IOVal (toCurry hv)))
+
+ioFunc2 :: (Curry a, Curry c,Curry f,ConvertCH a b,ConvertCH c d,ConvertCH f e) => 
+            (b->d->IO e) -> a -> c -> Result (C_IO f)
+ioFunc2 iof x y _ = C_IO (\ _ ->
+           iof (fromCurry x) (fromCurry y) Prelude.>>= \hv ->
+           Prelude.return (IOVal (toCurry hv)))
+
+ioFunc3 iof x y z _ = C_IO (\ _ ->
+           iof (fromCurry x) (fromCurry y) (fromCurry z) Prelude.>>= \hv ->
+           Prelude.return (IOVal (toCurry hv)))
+
+ghnfCTC2 :: (Curry a, Curry b,Curry c) => (a->b->c) -> a -> b -> Result c
+ghnfCTC2 f x y = ghnfCTC (\x'-> ghnfCTC (\ y' _ -> f x' y') y) x
+
+
+
+(=:<=) = error "function patterns not implemented"
+
+-- from old autogenerated
+
+data Prim t0 = PrimValue t0
+  | PrimFail C_Exceptions
+  | PrimOr OrRef (Branches (Prim t0))
+
+data C_Four = C_F0
+  | C_F1
+  | C_F2
+  | C_F3
+  | C_FourFail C_Exceptions
+  | C_FourOr OrRef (Branches C_Four)
+  deriving (Eq)
+
+instance BaseCurry C_Success where
+  nf f x st = f(x)(st)
+
+  gnf f x st = f(x)(st)
+
+  generator i = withRef(\ r -> C_SuccessOr(mkRef(r)(0)(i))([C_Success]))(0)
+
+  failed  = C_SuccessFail
+
+  branching  = C_SuccessOr
+
+  consKind (C_SuccessOr _ _) = Branching
+  consKind (C_SuccessFail _) = Failed
+  consKind _ = Val
+
+  exceptions (C_SuccessFail x) = x
+
+  orRef (C_SuccessOr x _) = x
+
+  branches (C_SuccessOr _ x) = x
+
+
+
+
+
+instance BaseCurry C_Bool where
+  nf f x st = f(x)(st)
+
+  gnf f x st = f(x)(st)
+
+  generator i = withRef(\ r -> C_BoolOr(mkRef(r)(0)(i))([C_False,C_True]))(0)
+
+  failed  = C_BoolFail
+
+  branching  = C_BoolOr
+
+  consKind (C_BoolOr _ _) = Branching
+  consKind (C_BoolFail _) = Failed
+  consKind _ = Val
+
+  exceptions (C_BoolFail x) = x
+
+  orRef (C_BoolOr x _) = x
+
+  branches (C_BoolOr _ x) = x
+
+
+
+
+
+instance BaseCurry C_Four where
+  nf f x st = f(x)(st)
+
+  gnf f x st = f(x)(st)
+
+  generator i = withRef(\ r -> C_FourOr(mkRef(r)(0)(i))([C_F0,C_F1,C_F2,C_F3]))(0)
+
+  failed  = C_FourFail
+
+  branching  = C_FourOr
+
+  consKind (C_FourOr _ _) = Branching
+  consKind (C_FourFail _) = Failed
+  consKind _ = Val
+
+  exceptions (C_FourFail x) = x
+
+  orRef (C_FourOr x _) = x
+
+  branches (C_FourOr _ x) = x
+
+
+
+
+
+

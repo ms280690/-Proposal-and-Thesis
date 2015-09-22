@@ -1,0 +1,150 @@
+Generation of stubs for external Functions
+==========================================
+
+External functions need to be transformed manually.
+For that reason the programmer should be supported with stubs for those functions.
+This module generates stubs for external functions of a given flat curry program in an initial `M<module>.hs` (see Transformation.lcurry).
+
+Usage
+-----
+
+Call `mkStubs` to generate the stubs module or `writeStubs` to write the `M<module>.hs` for given flat curry program.
+Function `containsExt` returns wether given program contains external functions or not.
+
+> module ExternalStubs (
+>   stubsInfo,
+>   mkStubs,
+>   writeStubs,
+>   containsExt) 
+>    where
+
+Imports
+-------
+
+> import System
+> import IO
+
+> import FlatCurry as FC
+> import FlatCurryGoodies
+
+> import AbstractCurry as AC
+> import AbstractHaskell
+
+> import FlatToAbstractCurry
+
+> import TransformationDebugInfo
+> import TransformationSignatures
+> import TransformationPrint
+
+Interface
+=========
+
+Generation info at the top of the stubs file:
+
+> stubsInfo = "{- Auto generated stubs for external functions and types\n   Remove this comment to suppress warnings. -}" 
+
+
+Returns wether given program contains external functions or types or not.
+
+> containsExt :: Prog -> Bool
+> containsExt (Prog _ _ types functions _) =
+>   any isExternal functions || any (null . typeConsDecls) types
+
+
+Generates external stubs module for given flat curry program.
+
+> mkStubs :: Prog -> HaskellProg
+> mkStubs = flip mkStubs' $ higherOrderTypes -- TODO: calculate higher order types
+
+
+Creates `M<module>.hs` with generated external stubs for given flat curry program.
+
+> writeStubs :: String -> Prog -> IO ()
+> writeStubs fileName prog = do
+>   prettyacy fileName $ mkStubs $ updQNamesInProg renameModule prog
+>   clean fileName
+
+
+Implementation
+==============
+
+Creates stubs after renaming of functions and types.
+
+> mkStubs' :: Prog -> [FC.QName] -> HaskellProg
+> mkStubs' (Prog modname _ types functions _) hoTypes =
+>   HaskellProg modname' "" [] "" types' insts stubs []
+>     where
+>       modname'       = modulePrefix ++ modname
+>       stubs          = concatMap (\f -> mkStub f hoTypes) functions
+>       (types',insts) = unzip $ concatMap handleType types
+
+
+Generates a list with a single stub for given external function or an empty list for regular function.
+
+> mkStub :: FuncDecl -> [FC.QName] -> [HFuncDecl]
+> mkStub (Func _ _ _ _ (Rule _ _)) _ = []
+> mkStub fd@(Func name arity _ typE (External _ )) hoTypes =
+>  if skippedFunc fd then [] else [stub]
+>   where
+>     stub   = HFunc name' arity AC.Private constr typE' $ rules [rule]
+>     name'  = renameFunc name
+>     constr = constraint debugMonadClass tvar :
+>             map (constraint staticInfoClass) tvars
+>     tvar   = (-1,debugTVarName) 
+>     tvars  = map convertTypeVariable (extractTVars typE)
+>     typE'  = transformType arity typE hoTypes
+>     rule   = simpleRule pats call
+>     pats   = map px [0..arity-1]
+>     call   = comb hook (map xx [0..arity-1]) $$ noImpl
+>     hook   = hookHelperName name
+
+Generates a list with a single tupel of type and `GenTerm` instance for given external type or an empty list for regular type or type synonym.
+
+> handleType :: TypeDecl -> [(HTypeDecl,InstanceDecl)]
+> handleType (TypeSyn _ _ _ _)  = []
+> handleType (Type _ _ _ (_:_)) = []
+> handleType td@(Type _ _ _ []) =
+>   let htd = mkType td in
+>   if skippedType td then [] else [(htd, mkInst htd)]
+
+
+Generates a type stub for given (external) type. Adds type variable for debug monad constraint, adds `GenTerm` constraints for further tvars and adds a constructor with same name like the type and original tvars.
+
+> mkType :: TypeDecl -> HTypeDecl
+> mkType (Type name _ tvars _) = type'
+>   where
+>     type'  = HTypeDecl constr (CType name' AC.Private (tvar':tvars') [cons]) []
+>     constr = constraint debugMonadClass tvar':
+>              map (constraint staticInfoClass) tvars'
+>     name'  = renameType $ name
+>     tvars' = (map convertTypeVariable tvars)
+>     tvar'  = (-1,debugTVarName)
+>     cons   = CCons name' (length tvars) AC.Private (map CTVar tvars')
+
+data InstanceDecl = Instance [TypeClass] TypeClass [HFuncDecl]
+
+Generates a stub `GenTerm` instance for given (external) type
+
+> mkInst :: HTypeDecl -> InstanceDecl
+> mkInst (HTypeDecl _ (CType name _ tvars _) _) = inst
+>   where
+>     inst   = Instance [] tclass [func]
+>     tclass = TypeClass staticInfoClass [CTCons name ctvars]
+>     ctvars = map CTVar tvars
+>     func   = HFunc staticInfoFunc 1 AC.Private [] untyped (rules [rule])
+>     rule   = simpleRule [px 0] noImpl
+
+error "not implemented":
+
+> noImpl = presym "error" $$ acyStr "not implemented"
+
+Removes module header from file containing haskell module with given name and replaces it with a generation info.
+
+> clean :: String -> IO ()
+> clean fileName = do
+>   handle <- openFile fileName ReadMode
+>   hGetLine handle -- remove 1st line
+>   contents <- hGetContents handle
+>   hClose handle
+>   let contents' = stubsInfo ++ "\n" ++ contents
+>   writeFile fileName contents'

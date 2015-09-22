@@ -1,0 +1,9 @@
+zip -r propsal-$(date +%b_%d_%Y_%H_%M_%S).zip../proposal/proposal
+
+
+
+
+In general 
+
+zip -r filename-$(date +%b_%d_%Y_%H_%M_%S).zip ../folder path
+

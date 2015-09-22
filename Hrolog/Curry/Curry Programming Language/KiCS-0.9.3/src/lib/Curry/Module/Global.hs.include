@@ -1,0 +1,47 @@
+[ForType "Global" Nothing,ForFunction "global"
+,ForFunction "prim_readGlobal"
+,ForFunction "prim_writeGlobal"
+]
+
+import System.IO.Unsafe
+import qualified Data.IORef as Ref
+
+type C_Global t0 = Prim (Ref.IORef t0)
+
+global :: (Curry t0) => t0 -> C_GlobalSpec -> Result (C_Global t0)
+global x spec = ref `seq` (\ _ -> PrimValue ref)
+  where ref = unsafePerformIO (Ref.newIORef x) 
+
+prim_readGlobal :: (Curry t0) => C_Global t0 -> Result (C_IO t0)
+prim_readGlobal  = prim_readIORef
+
+prim_writeGlobal :: (Curry t0) => C_Global t0 -> t0 -> Result (C_IO T0)
+prim_writeGlobal  = prim_writeIORef
+
+----------------------
+-- preparing io ref
+----------------------
+
+type C_IORef a = Prim (Ref.IORef a)
+
+instance Show (Ref.IORef a) where
+  show _ = "IOREF"
+
+instance Read (Ref.IORef a) where
+  readsPrec = error "reading IOREF"
+
+instance Generate (Ref.IORef a) where
+  genFree    = error "free variable of type IOExts.IORef"
+  maxArity _ = error "free variable of type IOExts.IORef"
+
+newIORef :: Curry t0 => t0 -> Result (C_IO (C_IORef t0))
+newIORef x = ioFunc0 (Ref.newIORef x) 
+
+prim_readIORef :: Curry t0 => C_IORef t0 -> Result (C_IO t0)
+prim_readIORef (PrimValue ref) _ = 
+   C_IO (\ _ -> do 
+           v <- Ref.readIORef ref 
+           Prelude.return (IOVal v))
+
+prim_writeIORef :: Curry t0 => C_IORef t0 -> t0 -> Result (C_IO T0)
+prim_writeIORef (PrimValue ref) x = ioFunc0 (Ref.writeIORef ref x) 

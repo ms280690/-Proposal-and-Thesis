@@ -1,0 +1,43 @@
+{- Auto generated stubs for external functions and types
+   Remove this comment to suppress warnings. -}
+module Curry.DebugModule.ReadShowTerm where
+ 
+strict_prim_showTerm ::
+                     (DM.DM dm, DI.GenTerm a) =>
+                       a ->
+                         dm (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char)
+strict_prim_showTerm x0
+  = hook_strict_prim_showTerm x0 (Prelude.error "not implemented")
+ 
+strict_prim_showQTerm ::
+                      (DM.DM dm, DI.GenTerm a) =>
+                        a ->
+                          dm (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char)
+strict_prim_showQTerm x0
+  = hook_strict_prim_showQTerm x0 (Prelude.error "not implemented")
+ 
+strict_prim_readsUnqualifiedTerm ::
+                                 (DM.DM dm, DI.GenTerm a) =>
+                                   Curry.DebugModule.Prelude.List
+                                     (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char)
+                                     ->
+                                     Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char
+                                       ->
+                                       dm
+                                         (Curry.DebugModule.Prelude.List
+                                            (Curry.DebugModule.Prelude.Tuple2 a
+                                               (Curry.DebugModule.Prelude.List
+                                                  Curry.DebugModule.Prelude.Char)))
+strict_prim_readsUnqualifiedTerm x0 x1
+  = hook_strict_prim_readsUnqualifiedTerm x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_prim_readsQTerm ::
+                       (DM.DM dm, DI.GenTerm a) =>
+                         Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                           dm
+                             (Curry.DebugModule.Prelude.List
+                                (Curry.DebugModule.Prelude.Tuple2 a
+                                   (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char)))
+strict_prim_readsQTerm x0
+  = hook_strict_prim_readsQTerm x0 (Prelude.error "not implemented")

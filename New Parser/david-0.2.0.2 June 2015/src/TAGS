@@ -1,0 +1,320 @@
+
+Database.hs,489
+module Database0,1
+data Signature =18,19
+data Signature = Signature Atom18,19
+instance Show19,20
+signature ::22,23
+signature (Struct23,24
+newtype Database =27,28
+newtype Database = DB (Map27,28
+hasPredicate ::29,30
+hasPredicate sig30,31
+createDB ::32,33
+createDB clauses33,34
+getClauses ::38,39
+getClauses term39,40
+asserta, assertz, abolish :: Term ->42,43
+asserta, assertz, abolish ::42,43
+asserta, assertz,42,43
+asserta fact43,44
+assertz fact44,45
+abolish fact45,46
+
+Parser.hs,1618
+module Parser2,3
+consult ::18,19
+consult =19,20
+consultString ::21,22
+consultString =22,23
+parseQuery ::24,25
+parseQuery =25,26
+parserTest ::27,28
+parserTest parser29,30
+{-========================================================================-}31,32
+program ::35,36
+program =36,37
+sentence ::38,39
+sentence39,40
+body ::44,45
+body =45,46
+clause ::47,48
+clause =48,49
+struct ::77,78
+struct =78,79
+nonAtomStruct ::80,81
+nonAtomStruct =81,82
+list ::86,87
+list =87,88
+bracedList ::91,92
+bracedList =92,93
+nonAtomConstant ::95,96
+nonAtomConstant96,97
+gTerms ::105,106
+gTerms =106,107
+terms ::111,112
+terms =112,113
+term ::114,115
+term =115,116
+flatItem ::120,121
+flatItem121,122
+variable ::136,137
+variable137,138
+atom ::143,144
+atom =144,145
+functorArgs ::153,154
+functorArgs =154,155
+term2 ::156,157
+term2 =157,158
+skip ::180,181
+skip =181,182
+charWs ::183,184
+charWs c184,185
+whitespace ::190,191
+whitespace =191,192
+comment ::193,194
+comment =194,195
+vname ::199,200
+vname =200,201
+pAtom ::204,205
+pAtom =205,206
+pString ::209,210
+pString =210,211
+qItem ::213,214
+qItem =214,215
+sItem ::216,217
+sItem =217,218
+sQuote ::221,222
+sQuote =222,223
+dQuote ::224,225
+dQuote =225,226
+escapeChar ::227,228
+escapeChar =228,229
+pInteger ::251,252
+pInteger =252,253
+pNan ::281,282
+pNan =282,283
+pInf ::283,284
+pInf =284,285
+pFloat ::290,291
+pFloat =291,292
+pExponent ::297,298
+pExponent =298,299
+isList (Struct310,311
+representChar ::316,317
+representChar c317,318
+representChar ::321,322
+toChar ::328,329
+toChar (Struct329,330
+toChar ::334,335
+
+PrettyPrint.hs,297
+module PrettyPrint where0,1
+instance Show7,8
+showSentencePrec d30,31
+showEmbracedItems ::36,37
+showEmbracedItems left37,38
+showParenList ::41,42
+showParenList =42,43
+showTermS ::44,45
+showTermS d45,46
+showsPrecFlatItemS ::56,57
+showsPrecFlatItemS d57,58
+prettyPrintAtom (Operator62,63
+
+Prolog.hs,18
+module Prolog0,1
+
+Quote.hs,405
+module Quote (tm,tms,c,pl)1,2
+instance Lift19,20
+tm,tms,c,pl :: QuasiQuoter32,33
+tm,tms,c,pl :: QuasiQuoter32,33
+tm,tms,c,pl :: QuasiQuoter32,33
+tm,tms,c,pl ::32,33
+tm  =33,34
+tms =34,35
+c   =35,36
+pl  =36,37
+type ParserName =38,39
+prologQuasiQuoter ::40,41
+prologQuasiQuoter parser42,43
+parsePrologExp ::49,50
+parsePrologExp parser51,52
+parsePrologPat ::74,75
+parsePrologPat parser76,77
+
+QuoteParser.hs,330
+module QuoteParser2,3
+{-========================================================================-}26,27
+fixOps ::30,31
+fixOps x31,32
+fixTerm ::32,33
+fixTerm xs33,34
+program ::36,37
+program =37,38
+clause ::39,40
+clause =40,41
+terms ::42,43
+terms =43,44
+term ::45,46
+term =46,47
+whitespace ::52,53
+whitespace =53,54
+
+Syntax.hs,1813
+module Syntax1,2
+type Program =18,19
+type Body    =19,20
+data Sentence21,22
+  = Query   Body22,23
+  | Command Body23,24
+  | C Clause24,25
+data Clause =27,28
+data Clause = Clause {27,28
+data Clause = Clause { lhs ::27,28
+data Clause = Clause { lhs :: Term, rhs_ :: [Goal]27,28
+            | ClauseFn {28,29
+            | ClauseFn { lhs ::28,29
+            | ClauseFn { lhs :: Term, fn :: [Term]28,29
+rhs ::31,32
+rhs (Clause32,33
+data Term =35,36
+data Term = Struct Atom35,36
+          | Var VariableName36,37
+          | Wildcard37,38
+          | PString   !String38,39
+          | PInteger  !Integer39,40
+          | PFloat    !Double40,41
+          | Flat [FlatItem]41,42
+          | Cut Int42,43
+var ::46,47
+var =47,48
+cut ::49,50
+cut =50,51
+data FlatItem =52,53
+data FlatItem = Bracket [FlatItem]52,53
+              | FITerm Term53,54
+              | FIOperator Atom54,55
+data VariableName =57,58
+data VariableName = VariableName Int57,58
+data Atom         =60,61
+data Atom         = Atom      !String60,61
+                  | Operator  !String61,62
+atomString ::64,65
+atomString (Atom65,66
+type Goal         =69,70
+instance Ord71,72
+infixr 475,76
+(<=!) ::76,77
+(<=!) :: Ord76,77
+wildcards ::82,83
+wildcards Wildcard83,84
+variables ::86,87
+variables (Var87,88
+numbers ::90,91
+numbers (PInteger91,92
+atoms ::95,96
+atoms (Struct96,97
+compound_terms ::99,100
+compound_terms (Struct100,101
+hierarchy ::106,107
+hierarchy ignoreConjunction107,108
+operatorTable ::124,125
+operatorTable =125,126
+foldr_pl f129,130
+cons t1132,133
+nil        =133,134
+data Operator =135,136
+data Operator = PrefixOp String135,136
+              | InfixOp Assoc136,137
+data Assoc =137,138
+data Assoc = AssocLeft137,138
+           | AssocRight138,139
+arguments ts141,142
+
+Unflatten.hs,827
+module Unflatten (0,1
+type PrologPrio =12,13
+type Dict =13,14
+data OpType =15,16
+data OpType = Oxf15,16
+            | Oyf16,17
+            | Ofx17,18
+            | Ofy18,19
+            | Oxfx19,20
+            | Oxfy20,21
+            | Oyfx21,22
+            | Oyfy22,23
+lookupOp ::25,26
+lookupOp d26,27
+defaultDict ::30,31
+defaultDict =31,32
+data UnpackedFlatItem =63,64
+data UnpackedFlatItem = UOp {63,64
+                           uAtom::Atom,64,65
+                           uPre:: Maybe65,66
+                           uInf:: Maybe66,67
+                           uPos:: Maybe67,68
+                      | UTerm Term68,69
+noneOp ::70,71
+noneOp =71,72
+addOp ::73,74
+addOp _74,75
+unpack ::84,85
+unpack dict85,86
+unflatten ::91,92
+unflatten d92,93
+unflattenList ::95,96
+unflattenList dict96,97
+
+Interpreter.lhs,801
+ module Interpreter6,7
+ xTerm ::27,28
+ xTerm str28,29
+ prFalse ::30,31
+ prFalse =31,32
+ builtins ::33,34
+ builtins =34,35
+ class Monad m => MonadTrace m114,115
+    trace ::115,116
+ instance MonadTrace116,117
+ newtype Trace m126,127
+ newtype Trace m a = Trace {126,127
+ newtype Trace m a = Trace { withTrace ::126,127
+ trace_ label128,129
+ class Monad m => MonadGraphGen m131,132
+    createConnections ::132,133
+    markSolution ::133,134
+    markCutBranches ::134,135
+ newtype NoGraphT m142,143
+ newtype NoGraphT m a = NoGraphT {runNoGraphT142,143
+ newtype NoGraphT m a = NoGraphT {runNoGraphT :: m142,143
+ type Stack =152,153
+ type Branch =153,154
+ type Path =154,155
+ root =155,156
+ resolve ::157,158
+ resolve program158,159
+ resolve_ ::160,161
+ resolve_ program162,163
+
+Unifier.lhs,391
+ module Unifier2,3
+ type Unifier      =16,17
+ type Substitution =17,18
+ unify, unify_with_occurs_check :: MonadPlus20,21
+ unify, unify_with_occurs_check20,21
+ unify =22,23
+ unify_with_occurs_check =24,25
+ unify' _32,33
+ same ::40,41
+ same f41,42
+ unifyList ::43,44
+ unifyList _44,45
+ both f50,51
+ u1 +++52,53
+ simplify ::54,55
+ simplify u55,56
+ apply ::58,59
+ apply =59,60

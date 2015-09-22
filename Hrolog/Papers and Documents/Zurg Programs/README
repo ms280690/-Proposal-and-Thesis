@@ -1,0 +1,37 @@
+
+* Search.hs 
+
+  Simple search type class 
+  (see Fig. 2 in the paper)
+
+
+* SearchStrat.hs 
+  
+  Extendsion of search type class by search strategy
+  parameter for the functions space and solutions
+  (see Fig. 4 in the paper)
+
+
+* Zurg.hs
+  
+  Implementation of the Zurg riddle using the simple
+  search type class
+  (see Fig. 3 in the paper)
+
+
+* ZurgStrat.hs
+  
+  Implementation of the Zurg riddle using the extended
+  search type class
+
+
+* zurg.pl
+
+  Prolog implementation of the Zurg riddle
+
+* ZurgDirect.hs
+
+  Direct implementation of the Zurg riddle without
+  using the type class.
+
+

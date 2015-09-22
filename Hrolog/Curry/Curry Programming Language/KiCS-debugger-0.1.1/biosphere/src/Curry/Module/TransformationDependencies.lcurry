@@ -1,0 +1,56 @@
+Debug Transformation of Dependencies
+====================================
+
+This module provides the transformation of all dependencies of a Curry module.
+
+Imports
+-------
+
+> import Make
+> import System
+> import Directory
+> import FlatCurryGoodies
+> import FileGoodies
+> import List
+> import Maybe
+> import Distribution (getStdLibDir)
+
+> import Transformation
+> import TransformationDebugInfo (outputFile)
+
+Interface
+=========
+
+> main = do
+>   params <- parseArgs 
+>   libdir <- getStdLibDir 
+>   maybe done mayCreateDirectory (output params)
+>   transformProgs libdir params
+
+> mayCreateDirectory :: String -> IO ()
+> mayCreateDirectory dir = do 
+>   ex <- doesDirectoryExist dir
+>   unless ex (createDirectory dir)
+
+Transforms all dependencies of Flat Curry file with given file name without suffix ".curry" or ".lcurry".
+
+> transformProgs libdir p = 
+>   make (quiet p) (modulename p)
+>        (testTransformNecessary libdir (quiet p) (output p))
+>        (\ dir _ prog -> transformFlatCurry (quiet p) (output p) dir prog Nothing)
+
+Implementation
+==============
+
+> testTransformNecessary libdir qu out path modu = do
+>   ob <- obsolete qu
+>           (\ dir m -> outputFile dir out m)
+>           (map renameFile [\n -> "../" ++ n ++ ".hs.include", (++".fcy")])
+>           (\_ -> return ()) path modu
+>   if isJust ob || isJust out || not (isPrefixOf libdir path)
+>     then return ob
+>     else do unless qu (putStrLn $ modu ++ " is a standard library")
+>             return (Just ())
+
+
+> renameFile = replaceFileName

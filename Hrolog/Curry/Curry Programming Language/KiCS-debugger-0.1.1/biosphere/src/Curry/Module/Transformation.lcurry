@@ -1,0 +1,503 @@
+Debug Transformation
+====================
+
+This module provides a transformation from Curry via FlatCurry and
+AbstractCurry to a strict Haskell program.
+
+Imports
+-------
+
+> import System
+> import IO
+> import IOExts
+> import Directory
+> import List
+> import Assertion
+
+> import FlatCurry as FC
+> import FlatCurryGoodies
+
+> import AbstractCurry as AC
+> import AbstractHaskell
+
+> import SrcRef
+
+> import LiftCases
+> import Make(unless)
+
+Import the converters from flat to abstract curry without any debug
+transformation:
+
+> import FlatToAbstractCurry
+
+Import the transformation monad `TM`:
+
+> import TransformationMonad
+
+Import utily and constants for Debug Infos:
+
+> import TransformationDebugInfo
+
+Import connector to pretty printer
+
+> import TransformationPrint
+
+> import TransformationSignatures
+
+2nd is deprecated
+
+> import TransformationInstances
+
+	> import TransformationGenTerm
+
+
+> import TransformationExpr
+> import TransformationPartCalls
+> import ExternalStubs
+
+Interface
+=========
+
+main = do
+  args <- getArgs
+  let mWorld = if length args == 2 then Just (last args) else Nothing
+  transformFlatCurry (head args) mWorld
+
+transformFCY mod = error "a" --transformFlatCurry mod Nothing
+
+Transforms Flat Curry file with given file name without suffix ".curry" or
+".lcurry" and writes it to a Haskell file with prefix "S". Takes maybe a 2nd
+String containing the name of the root function to apply to the "world".
+
+> transformFlatCurry quiet out dir prog mWorld =
+>   do
+
+  Read the source references tree for the program:
+
+>      let infoTree = treeN 4
+
+      getInfoTree prog
+
+	>      infoTree <- getInfoTree prog
+	>      print infoTree
+
+  Transform and pretty print program:
+
+>      let HaskellProg name f a _ b c d e = transformProg prog mWorld infoTree higherOrderTypes
+
+>      externals <- handleExternals quiet dir out prog 
+
+>      let fileName = outputFile dir out (progName prog) 
+>      prettyacy fileName (HaskellProg name f a externals b c d e)
+
+>      putStrLn (fileName ++ " written.")
+
+Implementation
+==============
+
+Transforms the given flat curry program.
+All QNames are renamed by adding the prefix, imports renamed and extended,
+types and functions are transformed in the transformation monad `TM` and
+instance declarations created for the types.
+
+> transformProg :: Prog -> Maybe String -> InfoTree -> [FC.QName] -> HaskellProg
+> transformProg prog@(Prog name _ _ _ _) mWorld infoTree hoTypes =
+>   trProg transProg . updQNamesInProg renameModule $ liftCases False prog
+>   where
+>     transProg _ imports types funcs _ =
+>       let
+>           (typeRefs,funcRefs) = splitAt (length types)
+>                                         (infoChildren infoTree)
+
+TODO: handle renaming after genTerms
+
+  Transform type declarations into transformed types and a collection of constructor source reference generators for part calls.
+
+>           (types',pcConsTerms) = transformTypeDecls types typeRefs hoTypes
+>           instsGenTerm    = instancesGenTerm types typeRefs hoTypes
+>           (instsGenerics,
+>            funcsGenerics) = instancesGenerics types hoTypes
+
+  Add a set of generated part call helpers, if there part calls with more missing arity than the arity threshold in `TransformationPartCalls`:
+
+>           funcs'   = (transformFuncs funcs funcRefs mWorld hoTypes)
+>                       ++ pcConsTerms
+>                       ++ (createPCHelpers modName funcs)
+>           modName  = modulePrefix++name in
+>         HaskellProg modName
+>                     "{-# LANGUAGE DeriveDataTypeable, ScopedTypeVariables #-}"
+>                     (delete modName $ transformImports imports)
+>                     ""
+>                     types'
+>                     (instsGenerics ++ instsGenTerm)
+>                     (funcsGenerics ++ funcs')
+
+  All operators are transformed to regular functions. For that reason no precedences are required:
+
+>                     []
+
+Adds the debugger modules to the imports and prefix "Strict" to each regular
+import.
+
+> transformImports :: [String] -> [String]
+> transformImports = (prelude:) .
+>                    (debugMonadImport:) .
+>                    (debugInfoImport:) .
+>                    (partCallsImport:) .
+>                    (dataGenericsImport:) .
+>                    (map (\name -> modulePrefix++name))
+
+
+Data Types
+----------
+
+Transforms the list of type declarations.
+Type synonyms are skipped since they are not used by Flat Curry programs.
+External types without constructors are not taken to the transformed list and
+need to be transformed manually.
+The second list contains source reference generators for constructor part calls, created for constructors with an arity > 0.
+
+> transformTypeDecls :: [TypeDecl] -> [InfoTree] -> [FC.QName] -> ([HTypeDecl],[HFuncDecl])
+> transformTypeDecls [] _ _ = ([],[])
+
+Convert type synonyms:
+
+> transformTypeDecls ((TypeSyn _ _ _ _):tds) (_:ts) hoTypes =
+>   transformTypeDecls tds ts hoTypes
+
+Skip external data types without constructors:
+
+> transformTypeDecls ((Type _ _ _ []):tds) (_:ts) hoTypes =
+>   transformTypeDecls tds ts hoTypes
+
+Transform data types with constructors:
+
+> transformTypeDecls (td@(Type _ _ _ conss@(_:_)):tds) (tree:trees) hoTypes =
+>   let (ttds,pcs) = transformTypeDecls tds trees hoTypes
+>       consTrees  = infoChildren $ snd $ nextStaticInfo tree
+>       ttds'      = transformTypeDecl td hoTypes : ttds
+>       pcs'       = createPCConsTerms conss consTrees ++ pcs in
+>     (ttds',pcs')
+
+
+Creates source reference generators for constructors with arity > 0 in given list.
+
+> createPCConsTerms [] _ = []
+> createPCConsTerms (cons:conss) (tree:trees) =
+>   let conss' = createPCConsTerms conss trees in
+>     if   consArity cons > 0
+>     then createPCConsTerm cons tree : conss'
+>     else conss'
+
+  Ingore the source ref of the type, but extract the info trees of the
+  constructors.
+
+
+Data Type
+---------
+
+Transforms a declared data type by transforming it's constructors, adding an additional type variable for the debug monad and it's constraint. This tvar is added to every data type for the case of functional arguments, represented as a monadic `FuncRep`.
+The data type is extended by a new constructor to represent not evaluated expressions of the type.
+
+> transformTypeDecl :: TypeDecl -> [FC.QName] -> HTypeDecl
+> transformTypeDecl (Type qn vis tvars conss) hoTypes =
+
+  Add `DM` constraint for additional tvar:
+
+>   (HTypeDecl (if elem qn hoTypes then [constraint debugMonadClass tvar] else [] ){-[constraint debugMonadClass tvar]-}
+>              (CType qn'
+>                     (convertVisibility vis)
+
+  Add debug monad type var `dm` as 1st tvar:
+
+>                     tvars'
+
+  Add new constructors and transform existing ones:
+
+>                     (fail:or:underscore:(map (\c -> transformCons c hoTypes) conss)))
+
+  If all constructors have got less than 8 arguments, `Typeable` and `Data` can be derived:
+
+>              (if maxArgs conss < 8 then [typeableClass,dataClass] else []))
+>   where
+>     tvar = (-1,debugTVarName)
+>     tvars' = if elem qn hoTypes then tvar:tvars'' else tvars''
+>     tvars'' = map convertTypeVariable tvars -- (tvar:(map convertTypeVariable tvars))
+>     underscore = CCons (mod,name++underscoreSuffix) 0 AC.Public []
+>     fail = CCons (mod,name++failSuffix) 0 AC.Public []
+>     or = CCons (mod,name++orSuffix) 0 AC.Public [orRef,orList]
+>     orRef = CTCons (debugMonadAs,"OrRef") []
+>     orList = CTCons (prelude,"[]") [CTCons qn' (map CTVar tvars')]
+>     qn'@(mod,name) = renameType qn
+>     maxArgs = foldr max 0 . map numArgs
+>     numArgs (Cons _ arity _ _) = arity
+
+Transforms a constructor declaration.
+
+> transformCons (Cons name arity vis types) hoTypes =
+>   CCons name' arity (convertVisibility vis) (map transformType' types)
+>   where
+>     name' = renameCons name
+>     transformType' te = case te of 
+
+    A single type variable is just converted:
+
+>                           (TVar _) -> convertType te
+
+    Functional types are transformed like higher order function declarations
+    with already handled arity, data types require transformation for additional
+    debug monad type variable:
+ 
+>                           _        -> transformType (-1) te hoTypes
+
+Function Declarations
+---------------------
+
+Transforms the list of function declarations.
+Functions with an external rule are not transformed but cause the creation of a helper function to call the function declaration hook in a manually coded
+implementation.
+
+> transformFuncs :: [FuncDecl] -> [InfoTree] -> Maybe String -> [FC.QName] -> [HFuncDecl]
+> transformFuncs [] _ _ _ = []
+
+TODO: refactor to a single rule and handle the difference between external and regular rules in another function.
+
+  Add hook and part call term helper for functions with an external rule:
+
+> transformFuncs (fd@(Func _ _ _ _ (External _)):fds) (it:its) mWorld hoTypes =
+>  let hook   = createHookHelper fd it
+>      tfuncs = transformFuncs fds its mWorld hoTypes in
+>    hook : (createPCTermGen fd it) : tfuncs
+
+  Transform functions with a regular rule in the transformation monad and add a generator for part call terms if arity > 1:
+
+> transformFuncs (fd@(Func (_,fname) arity _ _ (Rule _ _)):fds) (it:its) mWorld hoTypes =
+>  let applyWorld = case mWorld of
+>                     Nothing     -> False
+>                     Just fname' -> fname == fname'
+>      tfunc      = run (transformFunc fd applyWorld it hoTypes)
+>      tfuncs     = transformFuncs fds its mWorld hoTypes in
+>    if   arity > 0
+>    then tfunc : (createPCTermGen fd it) : tfuncs
+>    else tfunc : tfuncs
+
+Part Call helper
+----------------
+
+Generates non-default part call helpers for this module, if required (see module `TransformationPartCalls`).
+
+> createPCHelpers :: String -> [FuncDecl] -> [HFuncDecl]
+> createPCHelpers mod = map (mkPartCallHelper mod)
+>                       . (filter (> arityThreshold)) . nub . calcMissings
+
+Extracts numbers of missing arguments of all part calls in given function.
+
+> calcMissings :: [FuncDecl] -> [Int]
+> calcMissings = concat . map calcMissings' where
+>   calcMissings' :: FuncDecl -> [Int]
+>   calcMissings' (Func _ _ _ _ (Rule _ expr)) = tr expr
+>   calcMissings' (Func _ _ _ _ (External _)) = []
+>   tr    = trExpr var lit comb leT freE oR casE bran
+>   var _ = []
+>   lit _ = []
+>   comb ct _ args = missingArgs ct : concat args
+>   leT a b = (concat . map snd) a ++ b
+>   oR = (++)
+>   freE _ = id
+>   casE _ a b = a ++ concat b
+>   bran _ = id
+
+Hook helper
+-----------
+
+The hook helper is created for functions with external rules which have to be
+transformed manually. The helper function can be used to call the function declaration hook with the right source reference.
+Takes the arguments of the original function to create terms for dynamic info and the result value to call the hook.
+
+> createHookHelper :: FuncDecl -> InfoTree -> HFuncDecl
+> createHookHelper (Func name@(mod,fn) arity _ _ _) infoTree =
+>   untypedFunc name' [rule] where
+>     name' = hookHelperName name
+
+  Variables to match the functions arguments and the result value:
+
+>     vars  = [1..arity]
+>     value = (arity+1,"value")
+
+  The rule matches the given arguments and result value and wraps it with the
+  call of the hook:
+
+>     rule = simpleRule ((map px vars)++[CPVar value])
+>                       (wrapEval $ insertHook (CVar value))
+
+
+  Create the debug information with static reference to the function
+  declaration and generated terms of the arguments:
+
+>     info = debugInfo (createStaticInfo mod srcRefs)
+>                      (simpleDynInfo (list (map genTermCallVar vars)))
+>     insertHook val = comb (debugMonadAs,"funcDeclHook")
+>                           [acyStr fn,info,val]
+
+  Extract source reference of function from info tree:
+
+>     srcRefs  = fst $ nextStaticInfo infoTree
+
+
+Part Call Source Reference
+--------------------------
+
+Functions which perform are partial call to another function have to return a function representation including the partly applied function and a source reference.
+Though the calling function could be defined in another module than the called one.
+For that reason a helper function creating a function term inluding the correct source reference is generated for each function: `term_strict_f` (with `f` as name of the function)
+
+> createPCTermGen :: FuncDecl -> InfoTree -> HFuncDecl
+> createPCTermGen (Func name@(mn,fn) _ _ _ _) infoTree =
+
+  The Part Call Term generator takes a lists of arguments (1st variable) applied to a function and creates a term with name of the partly applied function and the source reference of it's declaration.
+
+>   untypedFunc (pcTermName name) [simpleRule [px 1] genTermExpr]
+>   where
+>     srcRefs     = fst $ nextStaticInfo infoTree
+>     statInfo    = (createStaticInfo mn srcRefs)
+>     genTermExpr = comb staticInfoCons [acyStr fn, statInfo, (xx 1)]
+
+
+Partial constructor calls are handled similar.
+
+> createPCConsTerm :: ConsDecl -> InfoTree -> HFuncDecl
+> createPCConsTerm (Cons name@(mn,cn) _ _ _) infoTree =
+
+>   untypedFunc (pcConsName name) [simpleRule [px 1] genTermExpr]
+>   where
+>     srcRefs     = fst $ nextStaticInfo infoTree
+>     statInfo    = (createStaticInfo mn srcRefs)
+>     genTermExpr = comb staticInfoCons [acyStr cn, statInfo, (xx 1)]
+
+
+Function Declaration
+--------------------
+
+Transforms a declared function using given info tree containing the source
+reference for the function.
+
+> transformFunc :: FuncDecl -> Bool -> InfoTree -> [FC.QName] -> TM HFuncDecl
+> transformFunc (Func qn arity visibility typeexpr rule) applyWorld infoTree hoTypes =
+
+>   ret (HFunc (renameFunc qn)
+>              arity
+>              (convertVisibility visibility)
+
+  The function requires a type constraint for the debug monad type variable and `GenTerm` for all other type variables.
+
+>              (debugMonadConstraint : createConstraints typeexpr)
+
+>              (if applyWorld then untyped else (transformType arity typeexpr hoTypes))
+>              (transformRule rule qn applyWorld infoTree))
+
+Creates a list of `GenTerm` constraints for type variables in given type
+expression.
+
+> createConstraints :: TypeExpr -> [TypeClass]
+> createConstraints typ = map createConstraint (extractTVars typ) where
+
+  Creates a `GenTerm` constraint for a type var with given index.
+
+>   createConstraint var = TypeClass staticInfoClass [tx var]
+
+
+Transforms a regular flat curry rule to a single flexible `CRule` (without
+guard and local declarations) of a `CRules`:
+
+> transformRule (Rule vars expr) (mn,fn) applyWorld infoTree =
+>   rules [simpleRule pattern cexpr]
+>     where pattern = (map px vars)
+>           cexpr   = wrapEval $ insertHook $ insertWorld $
+
+  Transform the function's expression in the transformation monad starting with a fresh variable (not used in the expression).
+
+>                     (runVar (freshVariable expr))
+>                     (transformExpr expr (mn,fn) vars exprInfoTree)
+
+  Extract source reference of function declaration and info tree of the
+  expression from the current info tree. The debug information includes static
+  info containing the source reference and dynamic info about the arguments.
+
+>           (srcRefs,exprInfoTree) = nextStaticInfo infoTree
+>           info = debugInfo (createStaticInfo mn srcRefs)
+>                            (simpleDynInfo (list (map genTermCallVar vars)))
+>           insertHook value = comb (debugMonadAs,"funcDeclHook")
+>                                   [acyStr fn,info,value]
+>           insertWorld      = if   applyWorld
+>                              then x
+>                              else id
+
+> x = \expr -> expr $$ (CSymbol $ renameModule (prelude,"Unit"))
+
+Manual transfomration of externals
+----------------------------------
+
+Checks if program contains external functions or data types and wether a file with manual transformation already exists.
+If not exists but should, generates stubs and warns user.
+If exists or generated, append. User is warned, if manual file contains an auto generated comment (=> stubs file has not been modified).
+
+> handleExternals quiet dir out prog@(Prog mod _ _ _ _) = do
+>   let exts = containsExt prog
+>   if not exts 
+>    then do put "no external contents"
+>            return "" 
+>    else test (map manualName (dir:(dir++"../"):maybe [] (:[]) out))
+>
+>  where
+>   put = unless quiet . putStrLn 
+>   
+>   manualName d = d ++ mod ++ ".hs.include"
+>
+>
+>   warning = "Warning: using generated external module."
+>   stubs filename = writeStubs filename prog >> 
+>                    putStrLn warning >>
+>                    return filename
+>
+>   test xs@(x:_)   = test' x xs
+>   test' mn []     = stubs mn
+>   test' _  (n:ns) = do put $ "testing existence of " ++ n
+>                        ex <- doesFileExist n
+>                        if ex then found n else test' n ns
+> 
+>   found name = do
+>                 put ("found external definition file "++name)
+>                 return name 
+
+
+
+Tests (don't work since prettyacy)
+----------------------------------
+
+	Function Types:
+
+	> test1 = AssertEqual "'lower order' type"
+	>                     (showTypeExpr False $ transformType 3 (FuncType (TVar 0) (FuncType (TCons (prelude,"Bool") []) (TVar 1))))
+	>                     "a -> Bool -> DM b"
+	>
+	> test2 = AssertEqual "higher order type"
+	>                     (showTypeExpr False $ transformType 1 (FuncType (TVar 0) (FuncType (TVar 1) (TCons (prelude,"Bool") []))))
+	>                     "a -> DM (b -> DM Bool)"
+	>
+	> test3 = AssertEqual "higher type SE"
+	>                     (showTypeExpr False $ transformType 0 (FuncType (TCons (prelude,"Bool") []) (FuncType (TVar 0) (TVar 1))))
+	>                     "DM (Bool -> DM (a -> DM b))"
+	>
+	> test4 = AssertEqual "just False"
+	>                     (showTypeExpr False $ transformType 0 (TCons (prelude,"Bool") []))
+	>                     "DM Bool"
+	>
+	> test5 = AssertEqual "functional parameter"
+	>                     (showTypeExpr False $ transformType 2 (FuncType (FuncType (TVar 0) (TVar 1)) (FuncType (TVar 0) (TVar 1))))
+	>                     "(a -> DM b) -> a -> DM b"
+	>
+	> test6 = AssertEqual "functional parameter SE"
+	>                     (showTypeExpr False $ transformType 3 (FuncType (FuncType (TVar 0) (FuncType (TVar 1) (TVar 2))) (FuncType (TVar 0) (FuncType (TVar 1) (TVar 2)))))
+	>                     "(a -> b -> DM c) -> a -> b -> DM c"
+	>
+

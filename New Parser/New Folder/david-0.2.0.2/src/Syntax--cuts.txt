@@ -1,0 +1,44 @@
+prettyPrint True _ t@(Struct (Atom ",") [_,_]) =
+   "(" ++ prettyPrint False 0 t ++  ")"
+
+prettyPrint f n (Struct (Atom (flip lookup operatorTable->Just (p,InfixOp assoc name))) [l,r]) =
+   parensIf (n >= p) $ prettyPrint f n_l l ++ spaced name ++ prettyPrint f n_r r
+     where (n_l,n_r) = case assoc of
+                           AssocLeft  -> (p-1, p)
+                           AssocRight -> (p, p-1)
+
+prettyPrint f n (Struct (Atom (flip lookup operatorTable->Just (p,PrefixOp name))) [r]) =
+   parensIf (n >= p) $ name ++ prettyPrint f (p {- Non-associative -}) r
+
+prettyPrint _ _ t@(Struct (Atom ".") [_,_]) =
+   let (ts,rest) = g [] t in
+      --case guard (isNil rest) >> sequence (map toChar ts) of
+      --   Just str -> prettyPrint str
+      --   Nothing  ->
+            "[" ++ intercalate "," (map (prettyPrint True 0) ts)
+                ++ (if isNil rest then "" else "|" ++ (prettyPrint True 0) rest)
+                ++  "]"
+   where g ts (Struct (Atom ".") [h,t]) = g (h:ts) t
+         g ts t = (reverse ts, t)
+         isNil (Struct (Atom "[]") []) = True
+         isNil _                       = False
+
+prettyPrint _ _ (Struct a [])   = show a
+prettyPrint _ _ (Struct a ts)   = show a ++ "(" ++ intercalate ", " (map (prettyPrint True 0) ts) ++ ")"
+prettyPrint _ _ (Var v)         = show v
+prettyPrint _ _ Wildcard        = "_"
+prettyPrint _ _ (Cut _)         = "!"
+--prettyPrint _ _ ((==cut)->True) = "!"
+--prettyPrint _ _ (Cut n)         = "!^" ++ show n
+
+
+spaced s = let h = head s
+               l = last s
+           in spaceIf (isLetter h) ++ s ++ spaceIf (isLetter l || ',' == l)
+
+spaceIf True  = " "
+spaceIf False = ""
+
+parensIf :: Bool -> String -> String
+parensIf True  s = "(" ++ s ++")"
+parensIf False s = s

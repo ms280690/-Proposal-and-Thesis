@@ -1,0 +1,68 @@
+[ForFunction "getCPUTime"
+,ForFunction "getElapsedTime"
+,ForFunction "getArgs"
+,ForFunction "prim_getEnviron"
+,ForFunction "getHostname"
+,ForFunction "getPID"
+,ForFunction "getProgName"
+,ForFunction "prim_system"
+,ForFunction "prim_sleep"
+,ForFunction "prim_exitWith"
+]
+
+import qualified System.Environment as SE
+import qualified System.CPUTime as SC
+import System.Cmd
+import System.Exit
+import qualified Network.BSD as NB
+import System.Posix.Process
+
+instance ConvertCH C_Int ExitCode where
+   toCurry ExitSuccess = toCurry (0::Integer)
+   toCurry (ExitFailure i) = toCurry i
+
+   fromCurry i = if hi Prelude.== 0 then ExitSuccess else ExitFailure hi
+     where hi = fromCurry i
+
+getCPUTime :: Result (C_IO C_Int)
+getCPUTime = ioFunc0 (SC.getCPUTime Prelude.>>= Prelude.return . (`div` 1000000000))
+
+getElapsedTime :: Result (C_IO C_Int)
+getElapsedTime = error "getElapsedTime not provided"
+
+getArgs :: Result (C_IO (List (List C_Char)))
+getArgs = ioFunc0 SE.getArgs
+
+prim_getEnviron :: (List C_Char) -> Result (C_IO (List C_Char))
+prim_getEnviron = 
+  ioFunc1 (\s -> do
+             env <- SE.getEnvironment
+             case Prelude.lookup s env of
+              Nothing -> Prelude.return ""
+              Just v  -> Prelude.return v)
+
+getHostname :: Result (C_IO (List C_Char))
+getHostname = ioFunc0 NB.getHostName
+
+getPID :: Result (C_IO C_Int)
+getPID = ioFunc0 (do
+                    pid <- getProcessID 
+                    Prelude.return (toInteger pid))
+
+getProgName :: Result (C_IO (List C_Char))
+getProgName = ioFunc0 (Curry.RunTimeSystem.getProgName)
+  -- conform with haskell would be: SE.getProgName
+
+prim_system :: (List C_Char) -> Result (C_IO C_Int)
+prim_system = ioFunc1 system
+
+prim_sleep :: C_Int -> Result (C_IO T0)
+prim_sleep = ioFunc1 (\ t -> do
+                          system ("sleep "++Prelude.show (t::Integer)) 
+                          Prelude.return ())
+
+prim_exitWith :: Curry a => C_Int -> Result (C_IO a)
+prim_exitWith e _ = C_IO (\ _ -> do
+  ex <- exitWith (fromCurry e) 
+  Prelude.return (IOVal ex))
+

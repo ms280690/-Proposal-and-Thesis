@@ -1,0 +1,37 @@
+From solanki@unbc.ca Wed Nov 12 12:14:12 2014
+Date: Wed, 12 Nov 2014 12:14:09
+From: Mehul Solanki <solanki@unbc.ca>
+To: "casper@unbc.ca" <casper@unbc.ca>
+Subject: unification-fd Tutorial
+
+Respected Sir,
+The author replied 3 weeks ago. But it was not included in hackage description or on her website. Instead it was on,
+http://community.haskell.org/~wren/unification-fd/test/tutorial/<http://community.haskell.org/~wren/unification-fd/test/>.
+
+Anyways, so I am working on the tutorial document and the code that goes along with it.
+
+Also I found some other attempt. I am not sure how relevant it is but any ways,
+
+http://nochair.net/posts/2012/03-29-unification-fd.html
+http://nochair.net/posts/2012/03-29-unification-fd.html
+
+Furthermore, I need help with writing stuff down. I do no know how to proceed.
+
+Thank you,
+Mehul Solanki.
+
+
+    [ Part 2, "test1.hs"  Application/OCTET-STREAM (Name: "test1.hs") 3.6 ]
+    [ KB. ]
+    [ Unable to print this part. ]
+
+
+    [ Part 3, "tutorial1.hs"  Application/OCTET-STREAM (Name: ]
+    [ "tutorial1.hs") 4.3 KB. ]
+    [ Unable to print this part. ]
+
+
+    [ Part 4, "Unification-fd Tutorial-1.docx" ]
+    [ Application/VND.OPENXMLFORMATS-OFFICEDOCUMENT.WORDPROCESSINGML.DOCUM ]
+    [ ENT (Name: "Unification-fd Tutorial-1.docx") 30 KB. ]
+    [ Unable to print this part. ]

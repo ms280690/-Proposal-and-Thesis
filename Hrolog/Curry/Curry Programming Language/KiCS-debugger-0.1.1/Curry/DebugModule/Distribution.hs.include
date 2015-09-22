@@ -1,0 +1,61 @@
+{- Auto generated stubs for external functions and types
+   Remove this comment to suppress warnings. -}
+module Curry.DebugModule.Distribution where
+ 
+strict_curryCompiler ::
+                     (DM.DM dm) =>
+                       dm (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char)
+strict_curryCompiler
+  = hook_strict_curryCompiler (Prelude.error "not implemented")
+ 
+strict_curryCompilerMajorVersion ::
+                                 (DM.DM dm) => dm Curry.DebugModule.Prelude.Int
+strict_curryCompilerMajorVersion
+  = hook_strict_curryCompilerMajorVersion
+      (Prelude.error "not implemented")
+ 
+strict_curryCompilerMinorVersion ::
+                                 (DM.DM dm) => dm Curry.DebugModule.Prelude.Int
+strict_curryCompilerMinorVersion
+  = hook_strict_curryCompilerMinorVersion
+      (Prelude.error "not implemented")
+ 
+strict_curryRuntime ::
+                    (DM.DM dm) =>
+                      dm (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char)
+strict_curryRuntime
+  = hook_strict_curryRuntime (Prelude.error "not implemented")
+ 
+strict_curryRuntimeMajorVersion ::
+                                (DM.DM dm) => dm Curry.DebugModule.Prelude.Int
+strict_curryRuntimeMajorVersion
+  = hook_strict_curryRuntimeMajorVersion
+      (Prelude.error "not implemented")
+ 
+strict_curryRuntimeMinorVersion ::
+                                (DM.DM dm) => dm Curry.DebugModule.Prelude.Int
+strict_curryRuntimeMinorVersion
+  = hook_strict_curryRuntimeMinorVersion
+      (Prelude.error "not implemented")
+ 
+strict_getStdLibDir ::
+                    (DM.DM dm) =>
+                      dm
+                        (Curry.DebugModule.Prelude.IO dm
+                           (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char))
+strict_getStdLibDir
+  = hook_strict_getStdLibDir (Prelude.error "not implemented")
+ 
+strict_getFrontendCall ::
+                       (DM.DM dm) =>
+                         dm
+                           (Curry.DebugModule.Prelude.IO dm
+                              (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char))
+strict_getFrontendCall
+  = hook_strict_getFrontendCall (Prelude.error "not implemented")
+ 
+strict_installDir ::
+                  (DM.DM dm) =>
+                    dm (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char)
+strict_installDir
+  = hook_strict_installDir (Prelude.error "not implemented")

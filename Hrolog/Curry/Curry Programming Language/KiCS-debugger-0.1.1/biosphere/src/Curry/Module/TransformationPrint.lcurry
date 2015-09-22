@@ -1,0 +1,25 @@
+Pretty Printer
+==============
+
+> module TransformationPrint ( prettyacy ) where
+
+This module provides the connection to an external pretty printer for
+AbstractHaskell.
+
+Imports
+-------
+
+> import System
+> import AbstractHaskell
+
+Interface
+=========
+
+Writes given Haskell Prog to given filename using prettyacy.
+
+> prettyacy :: String -> HaskellProg -> IO ()
+> prettyacy fileName prog = (prettyahs $## fileName) $## show prog
+
+> prettyahs :: String -> String -> IO ()
+> prettyahs external
+

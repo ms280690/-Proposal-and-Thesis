@@ -1,0 +1,290 @@
+Flat Curry to Abstract Curry
+============================
+
+This module provides some constants and converters from Flat Curry to Abstract Curry.
+
+Imports:
+--------
+
+> import FlatCurry as FC
+> import FlatCurryGoodies
+> import AbstractHaskell
+> import AbstractCurry as AC
+> import Assertion
+> import AbstractCurryPrinter
+> import List
+
+Variables
+=========
+
+Converts a flat curry variable index (single `Int`) to a `CVarIName` as
+parameter for `CTVar`, `CVar` and `CPVar`.
+
+> convertVariable :: VarIndex -> CVarIName
+> convertVariable i | i < 0     = (i,'y':show (-i))
+>                   | otherwise = (i,'x':show i)
+
+> convertTypeVariable :: VarIndex -> CVarIName
+> convertTypeVariable i | i < 0                  = (i, 'y':show (-i))
+>                       | i <= ord 'z' - ord 'a' = (i,[chr (i + ord 'a')])
+>                       | otherwise              = (i, 'x':show i)
+
+Creating variables
+
+> xx :: Int -> CExpr
+> xx = CVar . convertVariable
+
+> px :: Int -> CPattern
+> px = CPVar . convertVariable
+
+> tx :: Int -> CTypeExpr
+> tx = CTVar . convertTypeVariable
+
+Returns the index from the first fresh variable for the given FC expression.
+
+> freshVariable :: Expr -> Int
+> freshVariable = (+1) . maximum . allVars where
+>   maximum []            = -1
+>   maximum [x]           = x
+>   maximum (x:xs@(_:_))  = max x (maximum xs)
+
+Extracts all type variable indices contained in the given type.
+
+> extractTVars (TVar index)     = [index]
+> extractTVars (TCons _ argts)  = nub $ concat (map extractTVars argts)
+> extractTVars (FuncType t1 t2) = nub $ (extractTVars t1) ++ (extractTVars t2)
+
+
+Converts flat curry visibility in abstract curry visibilty.
+
+> convertVisibility FC.Public  = AC.Public
+> convertVisibility FC.Private = AC.Private
+
+
+Converts a flat curry operator into a abstract curry operator.
+
+> convertOperator :: OpDecl -> COpDecl
+> convertOperator (Op name p n) = (COp name (convertFixity p) n)
+
+
+Converts flat curry fixity in abstract curry fixity.
+
+> convertFixity InfixOp  = CInfixOp
+> convertFixity InfixlOp = CInfixlOp
+> convertFixity InfixrOp = CInfixrOp
+
+
+Converts a flat curry type declaration to abstract curry.
+
+> convertTypeDecl :: TypeDecl -> CTypeDecl
+> convertTypeDecl (Type name vis vars conss) =
+>   (CType name
+>          (convertVisibility vis)
+>          (map convertVariable vars)
+>          (map convertConsDecl conss))
+
+> convertTypeDecl (TypeSyn name vis vars typeexpr) =
+>   (CTypeSyn name
+>             (convertVisibility vis)
+>             (map convertVariable vars)
+>             (convertType typeexpr))
+
+
+Converts a flat curry type expression to abstract curry without transformation!
+
+> convertType :: TypeExpr -> CTypeExpr
+> convertType (TVar i)           = tx i
+> convertType (FuncType te1 te2) = CFuncType (convertType te1) (convertType te2)
+> convertType (TCons name tes)   = CTCons name (map convertType tes)
+
+
+Converts a flat curry constructor declaration to abstract curry.
+
+> convertConsDecl :: ConsDecl -> CConsDecl
+> convertConsDecl (Cons  name arity vis args) =
+>                 (CCons name arity (convertVisibility vis) (map convertType args))
+
+
+Converts a flat curry literal to abstract curry.
+
+> convertLiteral (Intc i)   = CIntc i
+> convertLiteral (Floatc f) = CFloatc f
+> convertLiteral (Charc c)  = CCharc c
+
+
+Converts a flat curry pattern to abstract curry.
+
+> convertPattern (Pattern name is) = CPComb name $ map (CPVar . convertVariable) is
+> convertPattern (LPattern lit)    = CPLit $ convertLiteral lit
+
+
+Abstract curry symbol for an empty guard:
+
+> csuccess :: CExpr
+> csuccess = presym "success"
+
+
+Some useful abstractions:
+-------------------------
+
+Create a rule with no guard 
+
+> noGuardRule :: [CPattern] -> CExpr -> [CLocalDecl] -> CRule
+> noGuardRule ps e = CRule ps [(csuccess,e)] 
+
+Create a simple rule with no guard and no local declarations
+
+> simpleRule :: [CPattern] -> CExpr -> CRule
+> simpleRule ps e = noGuardRule ps e []
+
+Create a rule without pattern
+
+> constantRule :: CExpr -> CRule
+> constantRule = simpleRule []
+
+there is no need for eval annotations anymore
+
+> rules :: [CRule] -> CRules
+> rules = CRules CFlex
+
+some simplifications and security in building a function declaration
+
+> funcDecl :: AC.QName -> CVisibility -> CTypeExpr -> [CRule] -> HFuncDecl
+> funcDecl _ _   _ [] = error "no rules to create function"
+> funcDecl n vis t rrs@(r:rs)
+>  | not (all (==arity r) (map arity rs)) = error "rules have different arity"
+>  | otherwise = HFunc n (arity r) vis [] t (rules rrs)
+>  where
+>    arity (CRule ps _ _) = length ps
+
+> pubFunc :: AC.QName -> CTypeExpr -> [CRule] -> HFuncDecl
+> pubFunc n = funcDecl n AC.Public
+
+> untypedFunc :: AC.QName -> [CRule] -> HFuncDecl
+> untypedFunc n = pubFunc n untyped
+
+> constantFunc :: AC.QName -> CExpr -> HFuncDecl
+> constantFunc n expr = untypedFunc n [constantRule expr]
+
+name of the prelude 
+
+> prelude :: String
+> prelude = "Prelude" 
+
+Constructing a QName of the prelude
+
+> prename :: String -> AC.QName
+> prename s = (prelude,s)
+
+A symbol of the prelude:
+
+> presym :: String -> CExpr
+> presym s = CSymbol (prename s)
+
+Apply an expression to an expression and to a list of expressions.
+
+> ($$) :: CExpr -> CExpr -> CExpr
+> ($$) = CApply
+
+> ($$$) :: CExpr -> [CExpr] -> CExpr
+> ($$$) = foldl ($$)
+
+> comb :: FC.QName -> [CExpr] -> CExpr
+> comb sym = ($$$) (CSymbol sym)
+
+Creating lists
+
+> (:!:) :: CExpr -> CExpr -> CExpr
+> a :!: b = (presym ":") $$$ [a,b] 
+
+> list :: [CExpr] -> CExpr
+> list []     = presym "[]"
+> list (e:es) = e :!: (list es)
+
+> acyStr :: String -> CExpr
+> acyStr []     = presym "[]"
+> acyStr (c:cs) = (presym ":") $$$ [(CLit (CCharc c)),(acyStr cs)]
+
+Creating lambdas
+
+> (->>) :: [CPattern] -> CExpr -> CExpr
+> (->>) = CLambda
+
+> (->-) :: CPattern -> CExpr -> CExpr
+> (->-) = CLambda . (:[])
+
+
+Higher Order is done with two concepts: 
+1) returning a partial call
+2) a lifting operation which is applied as many times as arguments are missing
+
+> higherOrder :: CExpr -> Int ->  CExpr 
+> higherOrder wrapper n = construct (map wrap [1 .. n])
+>   where
+>    construct [x]          = x
+>    construct (x:xs@(_:_)) = point $$$ [x,construct xs]
+>    
+>    wrap m | m==1      = wrapper
+>           | otherwise = point $$ wrap (m-1)
+
+The initial wrapper for monads
+
+> monadWrap :: CExpr
+> monadWrap = point $$ presym "return"
+
+The application `(.)` in AbstractCurry
+
+> point :: CExpr
+> point = presym "."
+
+a type expression representing "untyped" -- what an ugly hack :o(
+
+> untyped :: CTypeExpr
+> untyped = CTCons (prename "untyped") []
+
+Creates a constraint for given variable and qualified name of class.
+
+> constraint :: AC.QName -> CVarIName -> TypeClass
+> constraint clazz var = (TypeClass clazz [CTVar var])
+
+
+Tests
+------
+
+> test1 = AssertEqual "rules with no guard" 
+>                     (noGuardRule [] csuccess []) 
+>                     (simpleRule [] csuccess)
+>
+
+	> test2 = AssertEqual "see? no guard"
+	>                     (showFuncDecl (untypedFunc ("","f") [simpleRule [] csuccess]))
+	>                     "\nf = success"
+	>
+
+> test3 = AssertEqual "applying something"
+>                     (showExpr (presym "f" $$$ map (CVar . convertVariable) [1..3]))
+>                     "f x1 x2 x3"
+>
+>
+> test4 = AssertEqual "a nice lambda" 
+>                     (showExpr (px 1 ->- xx 1))
+>                     "\\x1 -> x1" 
+>
+
+should be equal to: return . (\x->x)
+
+> test5 = AssertEqual "higher order 1"
+>                     (showExpr $ higherOrder monadWrap 1 $$ (px 1 ->- xx 1))
+>                     "((.)) return (\\x1 -> x1)"
+
+should be equal to: ((return.) . ((return.).)) (\ x y ->x)
+
+> test6 = AssertEqual "higher order 2"
+>                     (showExpr $ higherOrder monadWrap 2 $$ ([px 1,px 2] ->> xx 1))
+>                     "((.)) (((.)) return) (((.)) (((.)) return)) (\\x1 x2 -> x1)"
+
+should be equal to: ((return.) . ((return.).) . (((return .) .) .)) (\ x y z -> x)
+
+> test7 = AssertEqual "higher order 3"
+>                     (showExpr $ higherOrder monadWrap 3 $$ ([px 1,px 2,px 3] ->> xx 1))
+>                     "((.)) (((.)) return) (((.)) (((.)) (((.)) return)) (((.)) (((.)) (((.)) return)))) (\\x1 x2 x3 -> x1)"

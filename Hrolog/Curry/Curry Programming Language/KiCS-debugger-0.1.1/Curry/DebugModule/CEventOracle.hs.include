@@ -1,0 +1,79 @@
+{- Auto generated stubs for external functions and types
+   Remove this comment to suppress warnings. -}
+module Curry.DebugModule.CEventOracle where
+ 
+instance DI.GenTerm (Ref dm) where
+        genTerm x0 = Prelude.error "not implemented"
+ 
+data (DM.DM dm) => Ref dm = Ref
+ 
+strict_initRef ::
+               (DM.DM dm) => dm (Curry.DebugModule.Prelude.IO dm Ref)
+strict_initRef
+  = hook_strict_initRef (Prelude.error "not implemented")
+ 
+strict_finalize ::
+                (DM.DM dm) =>
+                  Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                    dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_finalize x0
+  = hook_strict_finalize x0 (Prelude.error "not implemented")
+ 
+strict_fresh ::
+             (DM.DM dm) => Curry.DebugModule.Prelude.Unit -> dm Ref
+strict_fresh x0
+  = hook_strict_fresh x0 (Prelude.error "not implemented")
+ 
+strict_replace :: (DM.DM dm, DI.GenTerm a) => Ref -> a -> dm a
+strict_replace x0 x1
+  = hook_strict_replace x0 x1 (Prelude.error "not implemented")
+ 
+strict_collapse :: (DM.DM dm, DI.GenTerm a) => Ref -> a -> dm a
+strict_collapse x0 x1
+  = hook_strict_collapse x0 x1 (Prelude.error "not implemented")
+ 
+strict_closeRef :: (DM.DM dm, DI.GenTerm a) => Ref -> a -> dm a
+strict_closeRef x0 x1
+  = hook_strict_closeRef x0 x1 (Prelude.error "not implemented")
+ 
+strict_expand ::
+              (DM.DM dm, DI.GenTerm a) =>
+                Ref -> Curry.DebugModule.Prelude.List Ref -> a -> dm a
+strict_expand x0 x1 x2
+  = hook_strict_expand x0 x1 x2 (Prelude.error "not implemented")
+ 
+strict_unknown :: (DM.DM dm, DI.GenTerm a) => Ref -> dm a
+strict_unknown x0
+  = hook_strict_unknown x0 (Prelude.error "not implemented")
+ 
+op_DollarEMark ::
+               (DM.DM dm, DI.GenTerm a, DI.GenTerm b) =>
+                 DM.Func dm Ref (DM.Func dm a b) -> a -> Ref -> dm b
+op_DollarEMark x0 x1 x2
+  = hook_op_DollarEMark x0 x1 x2 (Prelude.error "not implemented")
+ 
+op_DollarEMarkEMark ::
+                    (DM.DM dm, DI.GenTerm a, DI.GenTerm b) =>
+                      DM.Func dm Ref (DM.Func dm a b) -> a -> Ref -> dm b
+op_DollarEMarkEMark x0 x1 x2
+  = hook_op_DollarEMarkEMark x0 x1 x2
+      (Prelude.error "not implemented")
+ 
+op_DollarRhomb ::
+               (DM.DM dm, DI.GenTerm a, DI.GenTerm b) =>
+                 DM.Func dm Ref (DM.Func dm a b) -> a -> Ref -> dm b
+op_DollarRhomb x0 x1 x2
+  = hook_op_DollarRhomb x0 x1 x2 (Prelude.error "not implemented")
+ 
+op_DollarRhombRhomb ::
+                    (DM.DM dm, DI.GenTerm a, DI.GenTerm b) =>
+                      DM.Func dm Ref (DM.Func dm a b) -> a -> Ref -> dm b
+op_DollarRhombRhomb x0 x1 x2
+  = hook_op_DollarRhombRhomb x0 x1 x2
+      (Prelude.error "not implemented")
+ 
+strict_apply ::
+             (DM.DM dm, DI.GenTerm a, DI.GenTerm b) =>
+               DM.Func dm Ref (DM.Func dm a b) -> a -> Ref -> dm b
+strict_apply x0 x1 x2
+  = hook_strict_apply x0 x1 x2 (Prelude.error "not implemented")

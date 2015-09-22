@@ -1,0 +1,231 @@
+Generating Part Call Helpers
+============================
+
+This module provides support for part calls, especially the generation of part
+call helpers.
+These generated functions are able to create the correct `FuncRep` term for
+higher order applications. The helper to use depends on the left arity of a
+part call.
+
+Usage
+-----
+
+For a FlatCurry `(FuncPartCall n)` one can use in Haskell:
+
+ 1. missing <= arityThreshold:
+
+    Call `<partCallsModule>.<partCallPrefix><n>` (`PartCalls.partCall<n>`).
+
+    Shortcut for transformation (Curry) is `combDefaultPC <n> <cexprs>`.
+
+ 2. missing > arityThreshold:
+
+    Create Yourself a helper using `mkPartCallHelper <yourModName> <n>`
+    and call it in your module with `<yourModName>.<partCallPrefix><n>`.
+
+    Shortcut for transformation (Curry) is `combPC <yourModName> <n> <cexprs>`.
+
+> module TransformationPartCalls (
+>   arityThreshold,
+>   partCallsModule,
+>   partCallsAs,
+>   partCallsImport,
+>   partCallPrefix,
+>   main,
+>   mkPartCallsModule,
+>   mkPartCallHelper,
+>   combDefaultPC,
+>   combPC) 
+>    where
+
+Imports
+-------
+
+> import System
+
+> import AbstractCurry
+> import AbstractHaskell
+
+> import FlatToAbstractCurry
+
+> import TransformationDebugInfo
+> import TransformationPrint
+
+Interface
+=========
+
+Default Helpers
+---------------
+
+The framework is distributed with a module which contains part call helpers until the following threshold in a Haskell Module with the following name. Further part call helpers can be created by requiring modules.
+
+> arityThreshold  = 10
+> partCallPrefix  = "partCall"
+> partCallsFile   = "PartCalls"
+> partCallsModule = debugPackage ++ partCallsFile
+> partCallsAs     = "PC"
+> partCallsImport = partCallsModule ++ " as " ++ partCallsAs
+
+Pretty prints and writes the module containing the default helpers.
+Takes 1st argument as output folder for the module.
+
+> main :: IO ()
+> main = do
+>   args <- getArgs
+>   let filename = (head args ++ "/" ++ partCallsFile ++ ".hs")
+>   putStr   "Creating default part call helpers until `"
+>   putStrLn $ partCallPrefix ++ show arityThreshold ++ "` in " ++ filename ++ "."
+>   prettyacy filename (mkPartCallsModule arityThreshold)
+
+Creates the module containing a number of default helpers.
+
+> mkPartCallsModule :: Int -> HaskellProg
+> mkPartCallsModule num =
+>   HaskellProg partCallsModule
+>               "" -- no header
+
+  Requires the debug monad for `FuncRep` and debug info for terms:
+
+>               [debugMonadImport,debugInfoImport]
+>               "" -- no externals
+>               [] -- no types
+>               [] -- no instance declarations
+
+  Provide helpers until defined threshold:
+
+>               (map (mkPartCallHelper partCallsAs) [1..num])
+>               [] -- no operators
+
+Part Call Helper
+----------------
+
+Creates a specific helper for given module name and arity.
+
+> mkPartCallHelper :: String -> Int -> HFuncDecl
+> mkPartCallHelper mod arity = HFunc name arity' Public constraints typE rules
+>   where
+>     name        = (mod,partCallPrefix ++ show arity)
+>     arity'      = arity
+>     constraints = debugMonadConstraint:termConstraints arity
+>     typE        = mkType arity
+>     rules       = CRules CFlex [rule]
+>     rule        = createRule arity
+
+Comb Shortcut
+-------------
+
+Creates the call for a specific default helper (by given missing arity) with term expression and function expression.
+
+> combDefaultPC :: Int -> CExpr -> CExpr -> CExpr
+> combDefaultPC arity termExpr funcExpr
+>   | arity > arityThreshold = error "part call helper not available"
+>   | otherwise              = combPC partCallsAs arity termExpr funcExpr
+
+Creates the call for a specific helper (in given module) and arguments.
+
+> combPC :: String -> Int -> CExpr -> CExpr -> CExpr
+> combPC modName arity termExpr funcExpr =
+>   comb (modName,partCallPrefix ++ show arity) [termExpr,funcExpr]
+
+Implementation
+==============
+
+> termConstraints :: Int -> [TypeClass]
+> termConstraints arity = map termConstraint [0..arity]
+>   where
+>     termConstraint = (constraint staticInfoClass) . convertTypeVariable
+
+> createRule :: Int -> CRule
+> createRule arity = noGuardRule [patTerm,patFunc] (mkBody arity) [localDecl]
+>   where
+
+  Match left side the given term (with name info and terms of already
+  applied arguments) and the wrapped function:
+  `partCallArity (Term name info args) f = ...`
+
+>     patTerm   = CPComb staticInfoCons [patName,patInfo,patArgs]
+>     patName   = CPVar (0,"name")
+>     patInfo   = CPVar (1,"info")
+>     patArgs   = CPVar (2,"args")
+>     patFunc   = CPVar (3,"f")
+
+  Declare a local function `term` to create a `Term` with name, static info and
+  already applied terms of the handled function for given additional argument
+  terms:
+  `term = Term name info . (args++)`
+
+>     localDecl = CLocalFunc termFunc
+>     termFunc  = CFunc ("","term") 0 Public untyped
+>                       (rules [constantRule termExpr])
+>     termExpr  = point $$ (CSymbol staticInfoCons $$ CVar (0,"name")
+>                                                  $$ CVar (1,"info"))
+>                       $$ (presym "++" $$ CVar (2,"args"))
+
+> mkBody :: Int -> CExpr
+> mkBody arity = mkLambdas arity 1
+
+Handles current argument `var` in a part call with given left arity.
+Creates a function representation containing generated terms of the already applied arguments.
+`FuncRep (term [t1 ... tVar-1]) (\...)`
+
+> mkLambdas :: Int -> Int -> CExpr
+> mkLambdas arity var
+
+  Last argument, create func rep that does the call:
+  `\xArity -> f x1 ... xArity`
+
+>   | arity == var = funcRep $ lambda $ mkCall arity
+
+  Further arguments left, open a `do` to create term of the current argument
+  and reate func rep with recursive lambda which handles the other arguments:
+  `\xVar -> do let tVar = genTerm xVar ...`
+
+>   | otherwise    = funcRep $ lambda $ mkDo arity var
+
+  Function representation containing terms of all applied arguments:
+
+>   where funcRep func = CSymbol funcRepCons $$ allTerms $$ func
+>         allTerms = CSymbol ("","term") $$ newTerms
+>         newTerms = list (map termVar [1..(var-1)])
+>         termVar  = \v -> CVar (arity+v,'t':show v)
+
+  Lambda matching left-side the current argument:
+
+>         lambda   = CLambda [px var]
+
+Constructs the `do` expression which scopes the term for the current var for all sub-lambdas in a `let` and returns the recursive func rep with a part call hook.
+
+> mkDo :: Int -> Int -> CExpr
+> mkDo arity var = CDoExpr [stLet,stRet]
+>   where
+>     stLet    = CSLet [CLocalPat termVar termExpr []]
+>     termVar  = CPVar (arity+var,'t':show var)
+>     termExpr = (genTermCallVar var)
+>     stRet    = hook $ CSExpr $ presym "return" $$ mkLambdas arity (var+1)
+>     hook     = id -- TODO: partCall
+
+Constructs the final call to `f` with all applied arguments and wraps it with a func call hook.
+`f x1 ... xArity`
+
+> mkCall :: Int -> CExpr
+> mkCall arity = hook $ CSymbol ("","f") $$$ map xx [1..arity]
+>   where hook = id -- TODO: funcCall
+
+Type signature
+--------------
+
+Following code is taken from B.I.O. to create signature for part call helper. (mapped from FlatCurry to AbstractCurry, `TypeExpr` ~> `CTypeExpr` etc.).
+
+> infixr 7 ~>
+
+> (~~>), (~>) :: CTypeExpr -> CTypeExpr -> CTypeExpr
+> x ~~> y = CTCons funcRepType [CTVar (-1,debugTVarName),x,y]
+> (~>)    = CFuncType
+
+> mkType :: Int -> CTypeExpr
+> mkType n = termType ~> 
+>            foldr (\ v -> (tx v ~>)) resultType [0..(n-1)] ~>
+>            foldr (\ v t -> tx v ~~> t) (tx $ n) [0..(n-1)]
+>   where termType   = (CTCons staticInfoCons [])
+>         resultType = CTCons debugTVar [tx n]
+

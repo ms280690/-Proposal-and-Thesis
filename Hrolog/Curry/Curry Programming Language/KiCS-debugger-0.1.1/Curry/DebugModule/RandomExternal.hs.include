@@ -1,0 +1,34 @@
+{- Auto generated stubs for external functions and types
+   Remove this comment to suppress warnings. -}
+module Curry.DebugModule.RandomExternal where
+ 
+strict_prim_split ::
+                  (DM.DM dm) =>
+                    Curry.DebugModule.Prelude.Int ->
+                      dm
+                        (Curry.DebugModule.Prelude.Tuple2 Curry.DebugModule.Prelude.Int
+                           Curry.DebugModule.Prelude.Int)
+strict_prim_split x0
+  = hook_strict_prim_split x0 (Prelude.error "not implemented")
+ 
+strict_prim_nextInt ::
+                    (DM.DM dm) =>
+                      Curry.DebugModule.Prelude.Int ->
+                        dm (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Int)
+strict_prim_nextInt x0
+  = hook_strict_prim_nextInt x0 (Prelude.error "not implemented")
+ 
+strict_prim_nextIntRange ::
+                         (DM.DM dm) =>
+                           Curry.DebugModule.Prelude.Int ->
+                             Curry.DebugModule.Prelude.Int ->
+                               dm (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Int)
+strict_prim_nextIntRange x0 x1
+  = hook_strict_prim_nextIntRange x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_getRandomSeed ::
+                     (DM.DM dm) =>
+                       dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Int)
+strict_getRandomSeed
+  = hook_strict_getRandomSeed (Prelude.error "not implemented")

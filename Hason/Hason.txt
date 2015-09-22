@@ -1,0 +1,39 @@
+
+Multi Agent Programming using functional languages
+
+--------------------------------------------------------------------------------------------------------------------
+Publiactions
+
+Specifying and Controlling Agents in Haskell
+
+Designing and Implementing a Framework for BDI-style Communicating Agents in Haskell (Position Paper)
+http://www.di.unito.it/~baldoni/DALT-2012/papers/aamas12wp_submission_22.pdf
+--------------------------------------------------------------------------------------------------------------------
+
+clojure and agents 
+http://clojure.org/agents
+
+Actors from Erlang
+
+Cloud Haskell for distributed computing
+
+--------------------------------------------------------------------------------------------------------------------
+
+Actors Libraries
+
+hactors library: Practical actors for Haskell. (library, mit)
+
+simple-actors library: A library for more structured concurrent programming, based on the Actor Model (bsd3, library)
+
+actor library: Actors with multi-headed receive clauses (bsd3, library)
+
+thespian library: Lightweight Erlang-style actors for Haskell (bsd3, library)
+
+-------------------------------------------------------------------------------------------------------------------------
+
+Haskell Cafe multi agent systems
+http://www.haskell.org/pipermail/haskell-cafe/2011-April/090708.html
+
+
+
+

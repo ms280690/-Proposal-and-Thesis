@@ -1,0 +1,316 @@
+Debug Info utility and constants
+================================
+
+This module provides constants, wrappers and other functions for creating debug
+information and hooks.
+
+Imports
+-------
+
+> import FlatCurry as FC
+> import AbstractCurry as AC
+> import AbstractHaskell
+
+Import the converters from flat to abstract curry without any debug
+transformation:
+
+> import FlatToAbstractCurry
+
+> import SrcRef
+
+> import Char
+
+Constants
+---------
+
+Modules containing the debugger monad and the debug info
+
+> debugPackage     = "Curry.Debugger."
+> debugMonadModule = debugPackage++"DebugMonad"
+> debugMonadAs     = "DM"
+> debugMonadImport = debugMonadModule ++ " as " ++ debugMonadAs
+> debugInfoModule  = debugPackage++"DebugInfo"
+> debugInfoAs      = "DI"
+> debugInfoImport  = debugInfoModule ++ " as " ++ debugInfoAs
+> dataGenericsImport = "Data.Generics"
+> dataTypeableImport = "Data.Typeable"
+> typeableClass    = (dataGenericsImport,"Typeable")
+> dataClass        = (dataGenericsImport,"Data")
+
+> higherOrderTypes = map renameModule [(prelude,"IO")]
+
+Debug monad's type and eval
+
+> debugMonadClass = (debugMonadAs,"DM")
+> debugMonadEval = (debugMonadAs,"eval")
+
+Debug info class, method and constructors
+
+> debugInfoCons      = (debugInfoAs,"DebugInfo")
+> staticInfoClass    = (debugInfoAs,"GenTerm")
+> staticInfoFunc     = (debugInfoAs,"genTerm")
+> genericInfoFunc    = (debugMonadAs,"genericTerm")
+> genStaticInfoClass = (debugInfoAs,"GenStaticInfo")
+> genStaticInfoFunc  = (debugInfoAs,"genStaticInfo")
+> underscoreMethod   = (debugInfoAs,"underscore")
+> staticInfoCons     = (debugInfoAs,"Term")
+> underscoreCons     = (debugInfoAs,"TermUnderscore")
+> staticInfoSrcCons  = (debugInfoAs,"SrcID")
+> dynamicInfoCons    = (debugInfoAs,"DynamicInfo")
+
+Type and constructor for function representation
+
+> funcRepType = (debugMonadAs,"Func")
+> funcRepCons = (debugMonadAs,"FuncRep")
+
+prefix for the transformed module 
+
+> modulePrefix = "Curry.DebugModule."
+
+prefix for manually transformed module parts
+
+> manualPrefix = "M"
+
+prefix for functions
+
+> funcPrefix = "strict_"
+
+prefix for operators
+
+> opPrefix = "op_"
+
+prefix for function declaration source references
+
+> pcTermPrefix = "term_"
+
+prefix for hook helpers
+
+> hookHelperPrefix = "hook_"
+
+data type name suffix for constructor of representation of not evaluated expressions
+
+> underscoreSuffix = "Underscore"
+> failSuffix       = "Fail"
+> orSuffix         = "Or"
+
+> debugTVarName = "dm"
+> debugTVar = ("",debugTVarName)
+
+Debug monad class constraint
+
+> debugMonadConstraint = TypeClass debugMonadClass [CTVar (-1,debugTVarName)]
+
+Wrappers
+--------
+
+Wraps the given abstract curry type with the debug monad type variable `m`.
+
+> wrapDebugTVar :: CTypeExpr -> CTypeExpr
+> wrapDebugTVar = (CTCons debugTVar) . (:[])
+
+Wraps the given abstract curry expression with `return`.
+
+> wrapReturn :: CExpr -> CExpr
+> wrapReturn = comb (prename "return") . (:[])
+
+Wraps the given abstract curry expression with `eval` of the debug monad.
+
+> wrapEval :: CExpr -> CExpr
+> wrapEval = comb debugMonadEval . (:[])
+
+The initial wrapper for func reps (for `higherOrder`)
+
+> funcRepWrap :: CExpr -> CExpr
+> funcRepWrap term = point $$ (comb funcRepCons [term])
+
+Hooks
+-----
+
+Inserts a hook with given name prefix for given debug info expression and value expression.
+
+> insHook :: String -> CExpr -> CExpr -> CExpr
+> insHook prefix info value =
+>   comb (debugMonadAs,prefix ++ "Hook") [info,value]
+
+Inserts a exception hook with given name prefix for given debug info expression.
+
+> exceptionHook :: String -> CExpr -> CExpr
+> exceptionHook prefix info =
+>   comb (debugMonadAs,prefix ++ "Hook") [info]
+
+Skip External Types
+-------------------
+
+Set the flag to skip the following list of external data types of the Prelude and functions using them:
+
+> skipExternalTypes = False
+
+> externalTypes = map (renameModule . prename) ["Char","Float","IO"]
+
+> skippedFunc (Func _ _ _ typeExpr _) =
+>   skipExternalTypes && skippedSignature typeExpr
+
+> skippedSignature (TVar _) = False
+> skippedSignature (FuncType t0 t1) = skippedSignature t0 ||
+>                                     skippedSignature t1
+> skippedSignature (TCons name ts)  = elem name externalTypes ||
+>                                     any skippedSignature ts
+
+> skippedType (Type name _ _ conss) =
+>   skipExternalTypes && (elem name externalTypes || any skippedCons conss)
+>   where
+>     skippedCons (Cons _ _ _ ts)  = any skippedSignature ts
+
+
+Debug Info
+----------
+
+Creates a debug information for given static and dynamic infos expressions.
+
+> debugInfo :: CExpr -> CExpr -> CExpr
+> debugInfo stat dyn = comb debugInfoCons [stat,dyn]
+
+Creates a dynamic information for given context and arguments expressions.
+
+> dynamicInfo :: CExpr -> CExpr -> CExpr
+> dynamicInfo context args = comb dynamicInfoCons [context,args]
+
+Creates a dynamic information without context for given arguments expressions.
+
+> simpleDynInfo :: CExpr -> CExpr
+> simpleDynInfo args = comb dynamicInfoCons [presym "[]",args]
+
+Creates a static info for given module name and source references. First source reference is used, further references are ignored.
+The module prefix is removed from the name.
+Source reference `-1` in case of no available refs.
+
+> createStaticInfo :: String -> [SrcRef] -> CExpr
+> createStaticInfo mod []      = comb staticInfoSrcCons
+>                                     [acyStr (drop (length modulePrefix) mod),
+>                                      CLit (CIntc (-1))]
+> createStaticInfo mod (ref:_) = comb staticInfoSrcCons
+>                                     [acyStr (drop (length modulePrefix) mod),
+>                                      CLit (CIntc ref)]
+
+> dummyDebugInfo :: CExpr
+> dummyDebugInfo = comb debugInfoCons [dummyStatInfo,dyn]
+>   where
+>     dyn = simpleDynInfo (presym "[]")
+
+> dummyStatInfo :: CExpr
+> dummyStatInfo = comb staticInfoSrcCons
+>                      [(acyStr "DummyModule"),(CLit (CIntc 42))]
+
+Term generation
+---------------
+
+Wraps a given acy expression with a call of `genTerm`.
+
+> genTermCall :: CExpr -> CExpr
+> genTermCall = (comb staticInfoFunc) . (:[])
+
+Creates a `genTerm` call with variable of given index as argument.
+
+> genTermCallVar :: VarIndex -> CExpr
+> genTermCallVar = genTermCall . xx
+
+Hook Helper
+-----------
+
+> hookHelperName name =
+>   let (mod,fn) = renameFunc name
+>   in  (mod,hookHelperPrefix++fn)
+
+Part Call SrcRef
+----------------
+
+> pcTermName name = 
+>   let (mod,fn) = renameFunc name
+>   in  (mod,pcTermPrefix++fn)
+
+Constructor Part Call SrcRef
+----------------------------
+
+> pcConsName name = 
+>   let (mod,cn) = renameCons name
+>   in  (mod,pcTermPrefix++cn)
+
+Renaming
+--------
+
+> renameModule,renameType,renameCons,renameFunc :: FC.QName -> FC.QName
+
+Adds module prefix to module of given qualified name.
+
+> renameModule (mod,name) = (modulePrefix++mod,name)
+
+Renames a type (same renaming as constructors).
+
+> renameType name@(m,n) = case n of
+>   "[]" -> (m,"List")
+>   _    -> renameCons name
+
+Renames a constructor, cons, nil and tuples are renamed, infix constructors are renamed like operators and all other constructors are left as they are.
+
+> renameCons (mod,n@(c:_)) = case n of
+>   ":"  -> (mod,"Cons")
+>   "[]" -> (mod,"Nil")
+>   _    -> (case c of
+>              '(' -> (mod,renameTuple n)
+>              _   -> (mod,if isInfix n then renameTuple n else n))
+
+Renames a tuple from `(,^n)` to `Tuplen`
+
+> renameTuple name = let l = length name in
+>   case l of
+>     2 -> "Unit"
+>     _ -> "Tuple" ++ show (l-1)
+
+Adds function or operator prefix to given qualified name and converts to a
+string in case of an operator.
+
+> renameFunc (mod,func) = (mod,renameFunc' func)
+
+> renameFunc' :: String -> String
+> renameFunc' func
+>   | isInfix func = opPrefix ++ renameInfix func
+>   | otherwise    = funcPrefix ++ func
+
+> isInfix = all $ flip elem (map fst infixNames)
+
+Performs the renaming of operators, infix symbols are converted in
+human-readable strings.
+
+> renameInfix :: String -> String
+> renameInfix name = concat (map (convert infixNames) name) where
+>   convert [] c = error ("Unknown infix symbol: " ++ show c ++ " in " ++ name)
+>   convert ((c',name'):names) c | c == c'   = name'
+>                                | otherwise = convert names c
+
+> infixNames :: [(Char,String)]
+> infixNames = [('~',"Tilde"),
+>               ('!',"EMark"),
+>               ('@',"At"),
+>               ('#',"Rhomb"),
+>               ('$',"Dollar"),
+>               ('%',"Percent"),
+>               ('^',"Accent"),
+>               ('&',"And"),
+>               ('*',"Asterisk"),
+>               ('+',"Plus"),
+>               ('-',"Minus"),
+>               ('=',"Eq"),
+>               ('<',"Lt"),
+>               ('>',"Gt"),
+>               ('?',"QMark"),
+>               ('.',"Point"),
+>               ('/',"Slash"),
+>               ('|',"Or"),
+>               ('\\',"BSlash"),
+>               (':',"Colon")]
+
+
+
+> outputFile :: String -> Maybe String -> String -> String
+> outputFile path targetdir modulename = 
+>   maybe path id targetdir ++ "Curry/DebugModule/" ++ modulename ++ ".hs"

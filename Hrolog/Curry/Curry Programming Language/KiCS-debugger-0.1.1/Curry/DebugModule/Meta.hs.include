@@ -1,0 +1,100 @@
+{- Auto generated stubs for external functions and types
+   Remove this comment to suppress warnings. -}
+module Curry.DebugModule.Meta where
+ 
+instance DI.GenTerm (OrRef dm) where
+        genTerm x0 = Prelude.error "not implemented"
+ 
+data (DM.DM dm) => OrRef dm = OrRef
+ 
+strict_prim_isFree ::
+                   (DM.DM dm, DI.GenTerm a) =>
+                     a ->
+                       dm
+                         (Curry.DebugModule.Prelude.IO dm
+                            (Curry.DebugModule.Prelude.Either a a))
+strict_prim_isFree x0
+  = hook_strict_prim_isFree x0 (Prelude.error "not implemented")
+ 
+strict_headNormalFormIO ::
+                        (DM.DM dm, DI.GenTerm a, DI.GenTerm b) =>
+                          DM.Func dm a (Curry.DebugModule.Prelude.IO dm b) ->
+                            a -> dm (Curry.DebugModule.Prelude.IO dm b)
+strict_headNormalFormIO x0 x1
+  = hook_strict_headNormalFormIO x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_searchTree ::
+                  (DM.DM dm, DI.GenTerm a) =>
+                    a -> dm (Curry.DebugModule.Prelude.SearchTree a)
+strict_searchTree x0
+  = hook_strict_searchTree x0 (Prelude.error "not implemented")
+ 
+strict_gnfIO ::
+             (DM.DM dm, DI.GenTerm a) =>
+               a -> dm (Curry.DebugModule.Prelude.IO dm a)
+strict_gnfIO x0
+  = hook_strict_gnfIO x0 (Prelude.error "not implemented")
+ 
+strict_ghnfIO ::
+              (DM.DM dm, DI.GenTerm a) =>
+                a -> dm (Curry.DebugModule.Prelude.IO dm a)
+strict_ghnfIO x0
+  = hook_strict_ghnfIO x0 (Prelude.error "not implemented")
+ 
+strict_nfIO ::
+            (DM.DM dm, DI.GenTerm a) =>
+              a -> dm (Curry.DebugModule.Prelude.IO dm a)
+strict_nfIO x0
+  = hook_strict_nfIO x0 (Prelude.error "not implemented")
+ 
+strict_hnfIO ::
+             (DM.DM dm, DI.GenTerm a) =>
+               a -> dm (Curry.DebugModule.Prelude.IO dm a)
+strict_hnfIO x0
+  = hook_strict_hnfIO x0 (Prelude.error "not implemented")
+ 
+strict_getRichSearchTree ::
+                         (DM.DM dm, DI.GenTerm a) =>
+                           a -> dm (Curry.DebugModule.Prelude.IO dm (RichSearchTree a))
+strict_getRichSearchTree x0
+  = hook_strict_getRichSearchTree x0
+      (Prelude.error "not implemented")
+ 
+strict_richSearchTree ::
+                      (DM.DM dm, DI.GenTerm a) => a -> dm (RichSearchTree a)
+strict_richSearchTree x0
+  = hook_strict_richSearchTree x0 (Prelude.error "not implemented")
+ 
+strict_parallelSearch ::
+                      (DM.DM dm, DI.GenTerm a) =>
+                        a ->
+                          dm
+                            (Curry.DebugModule.Prelude.IO dm
+                               (Curry.DebugModule.Prelude.List a))
+strict_parallelSearch x0
+  = hook_strict_parallelSearch x0 (Prelude.error "not implemented")
+ 
+strict_cover :: (DM.DM dm, DI.GenTerm a) => a -> dm a
+strict_cover x0
+  = hook_strict_cover x0 (Prelude.error "not implemented")
+ 
+strict_st ::
+          (DM.DM dm, DI.GenTerm a) =>
+            a -> dm (Curry.DebugModule.Prelude.SearchTree a)
+strict_st x0 = hook_strict_st x0 (Prelude.error "not implemented")
+ 
+strict_richST ::
+              (DM.DM dm, DI.GenTerm a) => a -> dm (RichSearchTree a)
+strict_richST x0
+  = hook_strict_richST x0 (Prelude.error "not implemented")
+ 
+strict_ors ::
+           (DM.DM dm, DI.GenTerm a) =>
+             Curry.DebugModule.Prelude.List a -> dm a
+strict_ors x0
+  = hook_strict_ors x0 (Prelude.error "not implemented")
+ 
+strict_prim_throw :: (DM.DM dm, DI.GenTerm a) => Exception -> dm a
+strict_prim_throw x0
+  = hook_strict_prim_throw x0 (Prelude.error "not implemented")

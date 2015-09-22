@@ -1,0 +1,119 @@
+{- Auto generated stubs for external functions and types
+   Remove this comment to suppress warnings. -}
+module Curry.DebugModule.Unsafe where
+ 
+strict_prim_unsafePerformIO ::
+                            (DM.DM dm, DI.GenTerm a) =>
+                              Curry.DebugModule.Prelude.IO dm a -> dm a
+strict_prim_unsafePerformIO x0
+  = hook_strict_prim_unsafePerformIO x0
+      (Prelude.error "not implemented")
+ 
+strict_spawnConstraint ::
+                       (DM.DM dm, DI.GenTerm a) =>
+                         Curry.DebugModule.Prelude.Success -> a -> dm a
+strict_spawnConstraint x0 x1
+  = hook_strict_spawnConstraint x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_prim_isVar ::
+                  (DM.DM dm, DI.GenTerm a) => a -> dm Curry.DebugModule.Prelude.Bool
+strict_prim_isVar x0
+  = hook_strict_prim_isVar x0 (Prelude.error "not implemented")
+ 
+strict_prim_identicalVar ::
+                         (DM.DM dm, DI.GenTerm a) =>
+                           a -> a -> dm Curry.DebugModule.Prelude.Bool
+strict_prim_identicalVar x0 x1
+  = hook_strict_prim_identicalVar x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_prim_showAnyTerm ::
+                        (DM.DM dm, DI.GenTerm a) =>
+                          a ->
+                            dm (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char)
+strict_prim_showAnyTerm x0
+  = hook_strict_prim_showAnyTerm x0 (Prelude.error "not implemented")
+ 
+strict_prim_showAnyQTerm ::
+                         (DM.DM dm, DI.GenTerm a) =>
+                           a ->
+                             dm (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char)
+strict_prim_showAnyQTerm x0
+  = hook_strict_prim_showAnyQTerm x0
+      (Prelude.error "not implemented")
+ 
+strict_prim_readsAnyUnqualifiedTerm ::
+                                    (DM.DM dm, DI.GenTerm a) =>
+                                      Curry.DebugModule.Prelude.List
+                                        (Curry.DebugModule.Prelude.List
+                                           Curry.DebugModule.Prelude.Char)
+                                        ->
+                                        Curry.DebugModule.Prelude.List
+                                          Curry.DebugModule.Prelude.Char
+                                          ->
+                                          dm
+                                            (Curry.DebugModule.Prelude.List
+                                               (Curry.DebugModule.Prelude.Tuple2 a
+                                                  (Curry.DebugModule.Prelude.List
+                                                     Curry.DebugModule.Prelude.Char)))
+strict_prim_readsAnyUnqualifiedTerm x0 x1
+  = hook_strict_prim_readsAnyUnqualifiedTerm x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_prim_readsAnyQTerm ::
+                          (DM.DM dm, DI.GenTerm a) =>
+                            Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                              dm
+                                (Curry.DebugModule.Prelude.List
+                                   (Curry.DebugModule.Prelude.Tuple2 a
+                                      (Curry.DebugModule.Prelude.List
+                                         Curry.DebugModule.Prelude.Char)))
+strict_prim_readsAnyQTerm x0
+  = hook_strict_prim_readsAnyQTerm x0
+      (Prelude.error "not implemented")
+ 
+strict_showAnyExpression ::
+                         (DM.DM dm, DI.GenTerm a) =>
+                           a ->
+                             dm (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char)
+strict_showAnyExpression x0
+  = hook_strict_showAnyExpression x0
+      (Prelude.error "not implemented")
+ 
+strict_showAnyQExpression ::
+                          (DM.DM dm, DI.GenTerm a) =>
+                            a ->
+                              dm (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char)
+strict_showAnyQExpression x0
+  = hook_strict_showAnyQExpression x0
+      (Prelude.error "not implemented")
+ 
+strict_try ::
+           (DM.DM dm, DI.GenTerm a) =>
+             a ->
+               dm
+                 (Curry.DebugModule.Prelude.Either a
+                    (Curry.DebugModule.Prelude.Tuple2 Curry.DebugModule.Meta.OrRef
+                       (Curry.DebugModule.Prelude.List a)))
+strict_try x0
+  = hook_strict_try x0 (Prelude.error "not implemented")
+ 
+strict_orsWithOrRef ::
+                    (DM.DM dm, DI.GenTerm a) =>
+                      Curry.DebugModule.Meta.OrRef ->
+                        Curry.DebugModule.Prelude.List a -> dm a
+strict_orsWithOrRef x0 x1
+  = hook_strict_orsWithOrRef x0 x1 (Prelude.error "not implemented")
+ 
+strict_generateChoice ::
+                      (DM.DM dm, DI.GenTerm a) =>
+                        Curry.DebugModule.Prelude.List a -> dm a
+strict_generateChoice x0
+  = hook_strict_generateChoice x0 (Prelude.error "not implemented")
+ 
+strict_nrOfChoices ::
+                   (DM.DM dm) =>
+                     dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Int)
+strict_nrOfChoices
+  = hook_strict_nrOfChoices (Prelude.error "not implemented")

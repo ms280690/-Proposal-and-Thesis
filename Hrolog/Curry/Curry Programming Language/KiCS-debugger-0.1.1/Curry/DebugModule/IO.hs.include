@@ -1,0 +1,103 @@
+{- Auto generated stubs for external functions and types
+   Remove this comment to suppress warnings. -}
+module Curry.DebugModule.IO where
+ 
+instance DI.GenTerm (Handle dm) where
+        genTerm x0 = Prelude.error "not implemented"
+ 
+data (DM.DM dm) => Handle dm = Handle
+ 
+strict_stdin :: (DM.DM dm) => dm Handle
+strict_stdin = hook_strict_stdin (Prelude.error "not implemented")
+ 
+strict_stdout :: (DM.DM dm) => dm Handle
+strict_stdout
+  = hook_strict_stdout (Prelude.error "not implemented")
+ 
+strict_stderr :: (DM.DM dm) => dm Handle
+strict_stderr
+  = hook_strict_stderr (Prelude.error "not implemented")
+ 
+strict_prim_openFile ::
+                     (DM.DM dm) =>
+                       Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                         IOMode -> dm (Curry.DebugModule.Prelude.IO dm Handle)
+strict_prim_openFile x0 x1
+  = hook_strict_prim_openFile x0 x1 (Prelude.error "not implemented")
+ 
+strict_prim_hClose ::
+                   (DM.DM dm) =>
+                     Handle ->
+                       dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_prim_hClose x0
+  = hook_strict_prim_hClose x0 (Prelude.error "not implemented")
+ 
+strict_prim_hFlush ::
+                   (DM.DM dm) =>
+                     Handle ->
+                       dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_prim_hFlush x0
+  = hook_strict_prim_hFlush x0 (Prelude.error "not implemented")
+ 
+strict_prim_hIsEOF ::
+                   (DM.DM dm) =>
+                     Handle ->
+                       dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Bool)
+strict_prim_hIsEOF x0
+  = hook_strict_prim_hIsEOF x0 (Prelude.error "not implemented")
+ 
+strict_prim_hSeek ::
+                  (DM.DM dm) =>
+                    Handle ->
+                      SeekMode ->
+                        Curry.DebugModule.Prelude.Int ->
+                          dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_prim_hSeek x0 x1 x2
+  = hook_strict_prim_hSeek x0 x1 x2 (Prelude.error "not implemented")
+ 
+strict_prim_hWaitForInput ::
+                          (DM.DM dm) =>
+                            Handle ->
+                              Curry.DebugModule.Prelude.Int ->
+                                dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Bool)
+strict_prim_hWaitForInput x0 x1
+  = hook_strict_prim_hWaitForInput x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_prim_hWaitForInputs ::
+                           (DM.DM dm) =>
+                             Curry.DebugModule.Prelude.List Handle ->
+                               Curry.DebugModule.Prelude.Int ->
+                                 dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Int)
+strict_prim_hWaitForInputs x0 x1
+  = hook_strict_prim_hWaitForInputs x0 x1
+      (Prelude.error "not implemented")
+ 
+strict_prim_hGetChar ::
+                     (DM.DM dm) =>
+                       Handle ->
+                         dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Char)
+strict_prim_hGetChar x0
+  = hook_strict_prim_hGetChar x0 (Prelude.error "not implemented")
+ 
+strict_prim_hPutChar ::
+                     (DM.DM dm) =>
+                       Handle ->
+                         Curry.DebugModule.Prelude.Char ->
+                           dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_prim_hPutChar x0 x1
+  = hook_strict_prim_hPutChar x0 x1 (Prelude.error "not implemented")
+ 
+strict_prim_hIsReadable ::
+                        (DM.DM dm) =>
+                          Handle ->
+                            dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Bool)
+strict_prim_hIsReadable x0
+  = hook_strict_prim_hIsReadable x0 (Prelude.error "not implemented")
+ 
+strict_prim_hIsWritable ::
+                        (DM.DM dm) =>
+                          Handle ->
+                            dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Bool)
+strict_prim_hIsWritable x0
+  = hook_strict_prim_hIsWritable x0 (Prelude.error "not implemented")

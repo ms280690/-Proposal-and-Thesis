@@ -1,0 +1,12 @@
+interface Program1 where {
+import Prelude;
+hiding data Prelude.Bool;
+hiding data Prelude.IO a;
+data Stack a = Empty | Push a (Stack a);
+append1 2 :: [a] -> [a] -> [a];
+insert 2 :: a -> [a] -> [a];
+main 0 :: Prelude.IO ();
+member 2 :: a -> [a] -> Prelude.Bool;
+pop 1 :: Stack a -> Stack a;
+top 1 :: Stack (Stack a) -> Stack a
+}

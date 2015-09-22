@@ -1,0 +1,76 @@
+{- Auto generated stubs for external functions and types
+   Remove this comment to suppress warnings. -}
+module Curry.DebugModule.System where
+ 
+strict_getCPUTime ::
+                  (DM.DM dm) =>
+                    dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Int)
+strict_getCPUTime
+  = hook_strict_getCPUTime (Prelude.error "not implemented")
+ 
+strict_getElapsedTime ::
+                      (DM.DM dm) =>
+                        dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Int)
+strict_getElapsedTime
+  = hook_strict_getElapsedTime (Prelude.error "not implemented")
+ 
+strict_getArgs ::
+               (DM.DM dm) =>
+                 dm
+                   (Curry.DebugModule.Prelude.IO dm
+                      (Curry.DebugModule.Prelude.List
+                         (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char)))
+strict_getArgs
+  = hook_strict_getArgs (Prelude.error "not implemented")
+ 
+strict_prim_getEnviron ::
+                       (DM.DM dm) =>
+                         Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                           dm
+                             (Curry.DebugModule.Prelude.IO dm
+                                (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char))
+strict_prim_getEnviron x0
+  = hook_strict_prim_getEnviron x0 (Prelude.error "not implemented")
+ 
+strict_getHostname ::
+                   (DM.DM dm) =>
+                     dm
+                       (Curry.DebugModule.Prelude.IO dm
+                          (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char))
+strict_getHostname
+  = hook_strict_getHostname (Prelude.error "not implemented")
+ 
+strict_getPID ::
+              (DM.DM dm) =>
+                dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Int)
+strict_getPID
+  = hook_strict_getPID (Prelude.error "not implemented")
+ 
+strict_getProgName ::
+                   (DM.DM dm) =>
+                     dm
+                       (Curry.DebugModule.Prelude.IO dm
+                          (Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char))
+strict_getProgName
+  = hook_strict_getProgName (Prelude.error "not implemented")
+ 
+strict_prim_system ::
+                   (DM.DM dm) =>
+                     Curry.DebugModule.Prelude.List Curry.DebugModule.Prelude.Char ->
+                       dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Int)
+strict_prim_system x0
+  = hook_strict_prim_system x0 (Prelude.error "not implemented")
+ 
+strict_prim_exitWith ::
+                     (DM.DM dm, DI.GenTerm a) =>
+                       Curry.DebugModule.Prelude.Int ->
+                         dm (Curry.DebugModule.Prelude.IO dm a)
+strict_prim_exitWith x0
+  = hook_strict_prim_exitWith x0 (Prelude.error "not implemented")
+ 
+strict_prim_sleep ::
+                  (DM.DM dm) =>
+                    Curry.DebugModule.Prelude.Int ->
+                      dm (Curry.DebugModule.Prelude.IO dm Curry.DebugModule.Prelude.Unit)
+strict_prim_sleep x0
+  = hook_strict_prim_sleep x0 (Prelude.error "not implemented")

@@ -1,0 +1,3 @@
+ 
+member(Item,cons(Item|T).
+member(Item,cons(H|T)):-member(Item,cons(B,C,D)).

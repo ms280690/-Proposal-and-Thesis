@@ -1,0 +1,6 @@
+[ForFunction "debuggerLibPath"]
+
+import Curry.Files.KiCSDebugPath
+
+debuggerLibPath :: Result (C_IO C_String)
+debuggerLibPath = ioFunc0 getOracleLibDir

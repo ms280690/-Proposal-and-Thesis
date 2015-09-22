@@ -1,0 +1,53 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Welcome to writeLaTeX --- just edit your LaTeX on the left,
+% and we'll compile it for you on the right. If you give
+% someone the link to this page, they can edit at the same
+% time. See the help menu above for more info. Enjoy!
+%
+% Note: you can export the pdf to see the result at full
+% resolution.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass{article}
+\usepackage{tikz}
+%%%<
+\usepackage{verbatim}
+\usepackage[active,tightpage]{preview}
+\PreviewEnvironment{tikzpicture}
+%\setlength\PreviewBorder{10pt}%
+%%%>
+\begin{comment}
+:Title: Work breakdown structures aka WBS diagrams
+:Tags: Charts;Diagrams;Trees
+:Author: Gonzalo Medina
+:Slug: work-breakdown-structure
+
+A work breakdown structure (WBS) diagram, is for decomposing a task into smaller parts, which helps organizing and performing. This example diagram shows possible tasks for designing a TikZ diagram. The basis is a tree, nodes were addes below its child nodes. It was originally posted by Gonzalo Medina as TeX.SE (http://tex.stackexchange.com/q/81809/213), modified by Stefan Kottwitz.
+\end{comment}
+\usetikzlibrary{arrows,shapes,positioning,shadows,trees}
+
+\tikzset{
+  basic/.style  = {draw, text width=2cm, drop shadow, font=\sffamily, rectangle},
+  root/.style   = {basic, rounded corners=2pt, thin, align=center,
+                   fill=green!30},
+  level 2/.style = {basic, rounded corners=6pt, thin,align=center, fill=green!60,
+                   text width=8em},
+  level 3/.style = {basic, thin, align=left, fill=pink!60, text width=6.5em}
+}
+
+\begin{document}
+\begin{tikzpicture}[
+  level 1/.style={sibling distance=40mm},
+  edge from parent/.style={->,draw},
+  >=latex]
+
+% root of the the initial tree, level 1
+\node[root] {Declarative Programming}
+% The first level, as children of the initial tree
+  child {node[level 2] (c1) {Functional Programming}}
+  child {node[level 2] (c2) {Logic Programming}}
+  ;
+
+\end{tikzpicture}
+\end{document}

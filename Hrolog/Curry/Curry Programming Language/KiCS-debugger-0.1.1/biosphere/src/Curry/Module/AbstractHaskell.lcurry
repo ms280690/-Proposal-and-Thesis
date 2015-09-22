@@ -1,0 +1,43 @@
+AbstractHaskell
+===============
+
+Extends abstract curry by type classes.
+
+
+> import AbstractCurry
+> import AbstractCurryPrinter
+
+Types
+-----
+
+A type class consists of a class name and a number of class arguments:
+
+> data TypeClass = TypeClass QName [CTypeExpr]
+
+
+An instance declaration consists of constraints, the instanciated class and
+function declarations.
+
+> data InstanceDecl = Instance [TypeClass] TypeClass [HFuncDecl]
+
+
+A haskell function declaration is an abstract curry function declaration
+extended by type class constraints.
+
+> data HFuncDecl = HFunc QName Int CVisibility [TypeClass] CTypeExpr CRules
+
+
+The following Haskell programm type is an extension of `CurryProg` including
+instance declarations and haskell function declarations.
+
+> data HaskellProg = HaskellProg String          -- name
+>                                String          -- header
+>                                [String]        -- imports
+>                                String          -- external definitions
+>                                [HTypeDecl]     -- types
+>                                [InstanceDecl]  -- instance declarations
+>                                [HFuncDecl]     -- haskell functions
+>                                [COpDecl]       -- operators
+
+
+> data HTypeDecl = HTypeDecl [TypeClass] CTypeDecl [QName]
