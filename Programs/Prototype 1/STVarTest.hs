@@ -62,7 +62,7 @@ import Data.Map as Map
 import Control.Monad.Trans.Except
 
 
-instance (UT.Variable v, Functor t) => Error (UT.UFailure t v) where {}
+--instance (UT.Variable v, Functor t) => Error (UT.UFailure t v) where {}
 
 
 test1 ::

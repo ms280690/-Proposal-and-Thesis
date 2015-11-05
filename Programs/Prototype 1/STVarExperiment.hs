@@ -16,6 +16,9 @@
 				RankNTypes,
 				AllowAmbiguousTypes
 				#-}
+
+{-# OPTIONS_HADDOCK show-extensions, ignore-exports #-}
+
 module STVarExperiment where
 
 import Data.Generics (Data(..), Typeable(..))	
@@ -46,6 +49,7 @@ import Data.IntMap
 import Data.Char
 --import Data.List
 
+-- |This module defines the type 'FlatTerm'.
 
 type Atom = String
 
@@ -132,7 +136,7 @@ uTermify
 uTermify varMap ux = case ux of
   UT.UVar _          		-> ux
   UT.UTerm (Var v)  		-> maybe (error "bad map") UT.UVar $ Map.lookup v varMap
- -- UT.UTerm t         		-> UT.UTerm $! fmap (uTermify varMap) t
+ -- UT.UTerm t         		-> UT.UTerm $! fmap (uTermify varMap) 
   UT.UTerm (Struct a xs)	-> UT.UTerm $ Struct a $! fmap (uTermify varMap) xs  	
   UT.UTerm (Wildcard)		-> UT.UTerm Wildcard
   UT.UTerm (Cut i)			-> UT.UTerm (Cut i)
